@@ -1,0 +1,20 @@
+{
+  "name": "websec-decompiled",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline-first web exploitation curriculum: 31 topics, 272 Academy labs, zero-assumption mechanics",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "check:labs": "node scripts/check-labs.mjs",
+    "check:links": "node scripts/check-links.mjs",
+    "verify": "npm run check:labs && npm run build && npm run check:links",
+    "check:urls": "node scripts/check-urls.mjs"
+  },
+  "devDependencies": {
+    "markdown-it-container": "^3.0.0",
+    "vitepress": "^1.6.4"
+  }
+}

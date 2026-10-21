@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Websec Decompiled
+Comment=Open the Websec Decompiled training portal (instant & offline)
+Exec=/mnt/win_data/Storage/Sync/ctf_learn/start.sh
+Path=/mnt/win_data/Storage/Sync/ctf_learn
+Icon=/mnt/win_data/Storage/Sync/ctf_learn/public/favicon.svg
+Terminal=false
+Categories=Education;Security;Development;
+StartupNotify=true
