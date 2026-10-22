@@ -19,7 +19,8 @@
     "postbuild": "node scripts/build-redirects.mjs",
     "check:visuals": "node scripts/check-visuals.mjs",
     "check:scenes": "node scripts/check-scenes.mjs",
-    "check:sample": "node scripts/check-encoding-sample.mjs"
+    "check:sample": "node scripts/check-encoding-sample.mjs",
+    "check:ssrf-sample": "node scripts/check-ssrf-sample.mjs"
   },
   "devDependencies": {
     "markdown-it-container": "^3.0.0",

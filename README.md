@@ -6,6 +6,8 @@ The new application replaces the old theme and lesson interface. It uses a newly
 
 ## Current learning-design iteration
 
+The next user-selected unfamiliar topic is SSRF. `#/sample/ssrf` is a separate two-part sample: a fictional image importer, a responsive interactive network map showing the browser/server distinction, fixed public/private destinations, a destination-rule comparison, and one transfer question. The diagram’s paths and response panels derive from the same local result. Optional route animations respect reduced motion. No URL in the lesson is fetched, and it does not award lesson or lab progress. Run `npm run check:ssrf-sample` with the same browser/static-server variables; evidence is in `artifacts/ssrf-sample/`.
+
 Broader redesign work is paused for user feedback. The second topic, Encoding & parser boundaries, has an isolated beginner sample at `#/sample/encoding`, linked from its module page. It uses a new light/dark workshop design and two short parts: a named photo website with a browser-to-server filename journey, then one quick check. Repeated decoding and validation order are optional follow-up material. This is a small lesson for review, not a completed replacement of the whole encoding module. It does not award concept checks or lab completion.
 
 `npm run check:sample` exercises the full sample on desktop/mobile in light/dark against a temporary static server at `QA_BASE_URL`, using the same Playwright/Chromium environment variables as the other browser checks. Evidence is in `artifacts/encoding-sample-v2/`.
