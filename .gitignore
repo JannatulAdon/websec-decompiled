@@ -3,3 +3,7 @@ node_modules/
 .vitepress/cache/
 *.log
 .DS_Store
+
+artifacts/
+
+.release/

@@ -1,110 +1,65 @@
 # Websec Decompiled
 
-An offline-first, zero-assumption web exploitation training portal built with **VitePress**. It covers the **complete PortSwigger Web Security Academy catalog**: 31 topics, 272 labs, grouped under the concept each lab tests, with 32 flagship labs deconstructed token by token (plus the 18 SQL injection labs in the deep track).
+A browser-local web security learning platform for learning how to investigate unfamiliar CTF applications.
 
-## Hosted copy
+The new application replaces the old theme and lesson interface. It uses a newly authored curriculum and retains the factual catalogue of 272 Academy lab links. Original Markdown and lesson components remain in source as an archive; the production build excludes them. Existing public URLs redirect into the new curriculum.
 
-**https://jannatuladon.github.io/websec-decompiled/** — the current build is published from the `gh-pages` branch of the `JannatulAdon/websec-decompiled` repository. Rebuild with `BASE_PATH=/websec-decompiled/ npm run build` before updating that branch.
+## Learning experience
 
-## Quick start
+- 35 modules in 7 stages, beginning with HTTP, sessions, parsers, and controlled investigation.
+- 176 short concept scenarios covering mechanisms, observable evidence, failed-probe explanations, and transfer questions.
+- 176 editable lesson experiments, with controls, probes, decision traces, and a boundary comparison. These compute selected behavior locally; they are deliberately limited models rather than live exploitation labs.
+- 35 unfamiliar-scenario transfer checks, 35 practical investigation guides, and 6 independent fictional investigation workspaces.
+- 272 searchable Academy lab links with relevant concept lessons, investigation prompts, bookmarks, solved records, and notes. Every retained lab has an explicit prerequisite map; links teach mechanisms without revealing challenge solutions.
+- Four atmosphere palettes in dark and light modes; responsive layouts; keyboard-operated lesson tabs and inline term definitions.
+- Separate concept checks, transfer checks, solved labs, notes, JSON backups, legacy progress migration, and three-day review scheduling.
 
-Double-click **Websec Decompiled** on the desktop, or run the launcher:
+All application navigation uses hash routes so deep links work on GitHub Pages without a backend. Existing topic URLs lead into the rebuilt curriculum.
 
-```bash
-./start.sh
+## Develop and build
+
+```sh
+npm ci
+npm run dev
+BASE_PATH=/websec-decompiled/ npm run verify
 ```
 
-It installs dependencies on first run, starts the dev server, waits until it answers, and opens your browser. If port 5173 is busy it picks the next free port. `Ctrl+C` stops it.
+The prebuild script cleans generated output once. VitePress's parallel client/server bundles must not race to clean the same NTFS directory.
 
-Manual equivalent:
-
-```bash
-npm install
-npm run dev        # http://localhost:5173/
-```
-
-Production build and preview:
-
-```bash
-npm run build      # static output in .vitepress/dist
-npm run preview    # http://localhost:4173/
-```
+Progress stays in the browser under `websec-decompiled:rebuild:v1`. The older storage keys are read for migration and left untouched. Old XP does not become a new concept or transfer check. Importing backups merges progress; there is no reset operation in the UI.
 
 ## Verification
 
-```bash
-npm run check:labs   # 272 labs rendered once, 35 unit pages, trackers, content ids
-npm run build        # SSR build; fails on bad Markdown/Vue
-npm run check:links  # internal links + anchors in .vitepress/dist
-npm run verify       # all of the above, in order
-npm run check:urls   # optional: live HTTP check of all 272 lab URLs
+```sh
+npm run check:curriculum
+npm run check:ui
+npm run check:labs
+BASE_PATH=/websec-decompiled/ npm run build
+npm run check:links
+npm run check:browser
 ```
 
-The content check enforces that every lab appears exactly once on its unit page, every page has exactly one matching topic tracker, every authored note points at a real lab, worked examples have three hints plus a request, token table, and script, and every lab URL is an `https://portswigger.net/web-security/` URL.
+`check:curriculum` validates records, preparation mappings, local model invariants, parser behavior, and backup normalization. `check:ui` compiles the actual Vue components into a custom renderer to test state and event flows; it is not a browser or layout test. `check:labs` retains the legacy source-catalogue integrity audit. `check:links` understands both generated files and application routes.
 
-## What is inside
+`check:browser` needs Playwright and Chromium in an environment that permits browser processes. It serves built files through Playwright request interception, so it needs no background HTTP server by default. Set `QA_BASE_URL` to exercise a temporary static server instead. If Playwright is supplied outside this project's module resolution, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path. Optionally set `CHROMIUM_PATH` to a Chromium executable. Screenshots and an explicit status report go into `artifacts/browser/`.
 
-| Track | Topics | Labs |
-| --- | --- | --- |
-| SQL injection deep dive | 5 modules | 18 |
-| Server-side | 13 | 98 |
-| Client-side | 6 | 58 |
-| Advanced | 11 | 98 |
+Before publication, personally inspect the generated screenshots at 1440×900 and 390×844, across all four palettes in dark/light modes and the lesson/practice interactions. A successful automated run alone does not establish visual quality. A blocked run records zero screenshots and must not be reported as visual verification.
 
-The SQL injection track (`sql-injection/`) is fully hand-authored: every lab has three hint levels, raw HTTP, a character-by-character breakdown, and a Python solver. The remaining 30 topics (`xss/`, `authentication/`, `request-smuggling/`, and so on) contain:
+## Source map
 
-- a mechanics-first article with parser diagrams and dialect tables;
-- every lab linked, difficulty-tagged, described in one line, and checkable;
-- two to four worked examples per major topic with the full deconstruction format;
-- `🔬 Under the Hood` and `⚙️ Engine Variations` disclosures for the deep mechanics.
+- `.vitepress/theme/rebuilt/LearningApp.vue`: application shell, routing, learning modes, practice, reference, progress.
+- `.vitepress/theme/rebuilt/curriculum.js`: new lessons, stages, lab-preparation relevance rules.
+- `.vitepress/theme/rebuilt/experiments/`: lesson-specific executable models, including advanced variants.
+- `.vitepress/theme/rebuilt/preparation-map.js`: explicit prerequisite records for all 272 retained labs.
+- `.vitepress/theme/rebuilt/missions.js`: independent fictional investigations.
+- `.vitepress/theme/rebuilt/playbooks.js`: general tool and investigation workflows.
+- `.vitepress/theme/rebuilt/models.js`: restricted SQL, virtual path, detached HTML-parser models.
+- `.vitepress/theme/rebuilt/cases.js`: scenario-based transfer assessments.
+- `.vitepress/theme/rebuilt/store.js`: progress schema, migration, notes, backup normalization.
+- `.vitepress/theme/rebuilt/style.css`: responsive design and theme tokens.
 
-## Architecture
+## Hosting
 
-```text
-.
-├── .vitepress/
-│   ├── config.mjs              # nav, generated sidebar, local search, Shiki, ::: lab container
-│   └── theme/
-│       ├── index.js            # extends the default theme, registers components
-│       ├── Layout.vue          # injects the nav progress pill
-│       ├── labs.js             # registry: 35 units, 272 labs, phases
-│       ├── progress.js         # SSR-safe reactive localStorage store
-│       ├── data/
-│       │   ├── catalog.js      # generated from the official Academy "All labs" page
-│       │   ├── sql-labs.js     # hand-authored SQLi manifest (5 modules, 18 labs)
-│       │   └── content/        # per-topic notes + worked examples (30 files)
-│       ├── components/
-│       │   ├── LabGroup.vue    # lab cards: link, checkbox, hints, solution
-│       │   ├── LabCheckbox.vue
-│       │   ├── TopicComplete.vue
-│       │   ├── ProgressPill.vue
-│       │   └── ProgressDashboard.vue
-│       └── styles/custom.css   # dark-first theme, cards, meters, responsive rules
-├── index.md                    # landing dashboard, syllabus, study route
-├── sql-injection/              # 5 deep modules
-├── <topic>/index.md            # 30 Academy topic pages
-├── public/                     # favicon + hero diagram (no external assets)
-└── scripts/                    # content, link, and URL verification
-```
+Intended hosting remains GitHub Pages at `https://jannatuladon.github.io/websec-decompiled/`. Do not publish before the screenshot review passes. Retain repository history when syncing source and deploying the built files; do not use the old handoff's force-replacement deployment recipe.
 
-## Progress system
-
-- Storage key: `websec-decompiled:progress:v1` in `localStorage`.
-- Shape: `{ version, updatedAt, labs: { [id]: ISO }, topics: { [id]: ISO } }`.
-- `progress.js` exposes a shared reactive store; the nav pill, unit trackers, lab checkboxes, and dashboard all read it, so a toggle updates every mounted instance immediately.
-- A `storage` event listener syncs other tabs.
-- SSR renders zero progress; the snapshot is loaded in `onMounted`, avoiding hydration mismatches.
-- 35 units are tracked: the 5 SQLi modules and 30 topic pages.
-- Progress is origin-scoped: `localhost:5173` and a deployed origin keep separate records.
-
-## Content conventions
-
-- Every lab is rendered by `<LabGroup ids="a, b, c" />` (or `<LabCheckbox lab-id="..." />` inside the hand-authored SQLi pages).
-- Lab ids are stable, URL-derived, and unique; SQLi ids match the original manifest.
-- `data/content/<topic>.js` maps lab id → `{ note, work? }`. `work` is optional; when present, the card renders hints and a solution.
-- Deep mechanics use `::: details 🔬 Under the Hood: ...`; dialect differences use `::: details ⚙️ Engine Variations ...`.
-- The generated catalog keeps titles, difficulty, and URLs aligned with PortSwigger. Rebuild it from the official "All labs" page if the Academy changes.
-
-## Scope and ethics
-
-All payloads target deliberately vulnerable PortSwigger labs or systems you are explicitly authorized to test. Labs are hosted by PortSwigger and require an account; this portal does not run or exploit them for you. Web exploitation can read, modify, and delete production data.
+See `REBUILD_REPORT.md` for the release record, verification evidence, and the models’ scope.

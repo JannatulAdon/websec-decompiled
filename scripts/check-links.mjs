@@ -5,6 +5,7 @@
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
+import { modules } from '../.vitepress/theme/rebuilt/curriculum.js'
 
 const dist = resolve(process.cwd(), '.vitepress/dist')
 if (!existsSync(dist)) {
@@ -37,6 +38,16 @@ for (const page of pages) {
   for (const match of html.matchAll(/\shref="([^"]+)"/g)) {
     const href = match[1]
     if (!href || /^(https?:|mailto:|javascript:|data:)/.test(href)) continue
+    if (href.startsWith('#/')) {
+      const route = href.slice(2).split('/')
+      const simple = ['', 'path', 'labs', 'mystery', 'reference', 'progress'].includes(route[0]) && route.length === 1
+      const mod = modules.find(m => m.id === route[1])
+      const lesson = route[2] === undefined ? 0 : Number(route[2])
+      const learn = route[0] === 'learn' && mod && route.length <= 3 && Number.isInteger(lesson) && lesson >= 0 && lesson < mod.lessons.length
+      if (!simple && !learn) errors.push(`${relative(dist, page)}: unknown application route ${href}`)
+      checked++
+      continue
+    }
     if (href.startsWith('#')) {
       const id = decodeURIComponent(href.slice(1))
       if (id && !idsByPage.get(page).has(id)) {
@@ -62,7 +73,14 @@ for (const page of pages) {
       errors.push(`${relative(dist, page)}: broken link ${href} -> ${relative(dist, targetFile)}`)
       continue
     }
-    if (hash) {
+    if (hash.startsWith('/')) {
+      const route=hash.slice(1).split('/')
+      const mod=modules.find(m=>m.id===route[1])
+      const index=route[2]===undefined?0:Number(route[2])
+      const valid=route[0]==='learn'&&mod&&Number.isInteger(index)&&index>=0&&index<mod.lessons.length||['','path','labs','mystery','reference','progress'].includes(route[0])
+      if(!valid)errors.push(`${relative(dist,page)}: invalid application route ${href}`)
+    }
+    if (hash && !hash.startsWith('/')) {
       const id = decodeURIComponent(hash)
       if (!idsByPage.get(targetFile)?.has(id)) {
         errors.push(`${relative(dist, page)}: link ${href} points at a missing anchor`)
