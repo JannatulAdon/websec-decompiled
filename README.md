@@ -8,9 +8,11 @@ The new application replaces the old theme and lesson interface. It uses a newly
 
 - 35 modules in 7 stages, beginning with HTTP, sessions, parsers, and controlled investigation.
 - 176 short concept scenarios covering mechanisms, observable evidence, failed-probe explanations, and transfer questions.
-- 176 editable lesson experiments, with controls, probes, decision traces, and a boundary comparison. These compute selected behavior locally; they are deliberately limited models rather than live exploitation labs.
+- 176 guided lesson investigations with clickable input examples, immediate app responses, optional custom editors, highlighted decision traces, and baseline comparisons. These compute selected behavior locally; they are deliberately limited models rather than live exploitation labs.
 - 35 unfamiliar-scenario transfer checks, 35 practical investigation guides, and 6 independent fictional investigation workspaces.
 - 272 searchable Academy lab links with relevant concept lessons, investigation prompts, bookmarks, solved records, and notes. Every retained lab has an explicit prerequisite map; links teach mechanisms without revealing challenge solutions.
+- A small fictional app is the main lesson workspace. A three-step coach suggests the next action; recent requests can be replayed, and experiments survive lesson-tab changes. Mobile layouts place a compact task prompt before the app.
+- An interactive product-ID example on the homepage and optional ready requests in all six fictional investigations.
 - Four atmosphere palettes in dark and light modes; responsive layouts; keyboard-operated lesson tabs and inline term definitions.
 - Separate concept checks, transfer checks, solved labs, notes, JSON backups, legacy progress migration, and three-day review scheduling.
 
@@ -49,6 +51,9 @@ Before publication, personally inspect the generated screenshots at 1440×900 an
 
 - `.vitepress/theme/rebuilt/LearningApp.vue`: application shell, routing, learning modes, practice, reference, progress.
 - `.vitepress/theme/rebuilt/curriculum.js`: new lessons, stages, lab-preparation relevance rules.
+- `.vitepress/theme/rebuilt/MiniSystem.vue`: guided tasks, input choices, local model execution, comparisons, request history.
+- `.vitepress/theme/rebuilt/AppResponse.vue`: product, invoice, checkout, and tool response views driven by model results.
+- `.vitepress/theme/rebuilt/interaction.js`: input examples and fictional app presentation metadata.
 - `.vitepress/theme/rebuilt/experiments/`: lesson-specific executable models, including advanced variants.
 - `.vitepress/theme/rebuilt/preparation-map.js`: explicit prerequisite records for all 272 retained labs.
 - `.vitepress/theme/rebuilt/missions.js`: independent fictional investigations.
@@ -56,7 +61,7 @@ Before publication, personally inspect the generated screenshots at 1440×900 an
 - `.vitepress/theme/rebuilt/models.js`: restricted SQL, virtual path, detached HTML-parser models.
 - `.vitepress/theme/rebuilt/cases.js`: scenario-based transfer assessments.
 - `.vitepress/theme/rebuilt/store.js`: progress schema, migration, notes, backup normalization.
-- `.vitepress/theme/rebuilt/style.css`: responsive design and theme tokens.
+- `.vitepress/theme/rebuilt/style.css` and `guided.css`: theme tokens and responsive layouts.
 
 ## Hosting
 

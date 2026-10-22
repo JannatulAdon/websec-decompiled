@@ -1,11 +1,11 @@
-import { readFile, mkdir, writeFile, rm } from 'node:fs/promises'
+import { readFile, mkdir, writeFile, rm, readdir } from 'node:fs/promises'
 import { resolve, extname, sep } from 'node:path'
 import assert from 'node:assert/strict'
 import { modules, academyLabs } from '../.vitepress/theme/rebuilt/curriculum.js'
 import {lessonSystems} from '../.vitepress/theme/rebuilt/experiments/index.js'
 import { cases } from '../.vitepress/theme/rebuilt/cases.js'
 const output=resolve('artifacts/browser')
-await rm(output,{recursive:true,force:true});await mkdir(output,{recursive:true})
+await mkdir(output,{recursive:true});for(const name of await readdir(output)){if(!name.startsWith('.fuse_hidden'))await rm(resolve(output,name),{recursive:true,force:true,maxRetries:4,retryDelay:100})}
 let browser
 try{
  const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright')
@@ -46,32 +46,68 @@ try{
    const colors=await page.locator('.hero-actions .primary').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...colors)>=4.5,`${palette} ${dark}: primary-button contrast`)
    await page.locator('.hero-actions .primary').hover();const hoverColors=await page.locator('.hero-actions .primary').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...hoverColors)>=4.5,`${palette} ${dark}: hovered primary-button contrast`);await page.mouse.move(0,0)
    await screenshot(page,`${device}-${palette}-${dark?'dark':'light'}-home`)
+   const exampleColors=await page.locator('.home-demo .input-examples button[aria-pressed=true]').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...exampleColors)>=4.5,`${palette} ${dark}: selected-example contrast`)
+   await page.getByRole('button',{name:'id=abcd',exact:true}).click();assert((await page.locator('.home-demo .app-response').getAttribute('data-observation')).startsWith('404'))
+   await page.getByRole('button',{name:'id=8',exact:true}).click();assert((await page.locator('.home-demo .app-response').innerText()).includes('Cable tester'))
+   await page.goto(base+'#/learn/foundations/0')
+   await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
+   await page.getByRole('button',{name:'/items/8',exact:true}).click()
+   assert((await page.locator('.mini-system .app-response').innerText()).includes('Cable tester'))
+   if(device==='mobile')assert((await page.getByRole('button',{name:'/items/8',exact:true}).boundingBox()).y<844,'Ready examples should appear in the first phone viewport')
+   await screenshot(page,`${device}-${palette}-${dark?'dark':'light'}-guided`)
+   await page.goto(base)
+
   }
+  await page.goto(base+'#/learn/information-disclosure/0')
+  assert.equal(await page.locator('.model-field textarea').count(),0)
+  await page.getByRole('button',{name:'7',exact:true}).click()
+  assert((await page.locator('.app-response').innerText()).includes('Field notebook'))
+  await page.getByRole('button',{name:'abcd',exact:true}).click()
+  assert((await page.locator('.app-response').innerText()).includes('TypeError'))
+  await page.getByRole('button',{name:'③ Compare results',exact:false}).click()
+  assert((await page.locator('.response-comparison').innerText()).includes('200: Field notebook'))
+  assert((await page.locator('.response-comparison').innerText()).includes('500: TypeError'))
+  await (device==='mobile'?page.locator('.mobile-task button'):page.getByRole('button',{name:'Apply the boundary',exact:false})).click()
+  assert((await page.locator('.app-response').innerText()).includes('400: Invalid product ID'))
+  await page.getByRole('button',{name:'Type my own',exact:true}).click()
+  await page.getByRole('textbox',{name:'Product ID',exact:true}).fill('12')
+  await page.getByRole('button',{name:'Send again',exact:false}).click()
+  assert((await page.locator('.app-response').innerText()).includes('200: Field notebook'))
+  await page.getByRole('button',{name:'Start over',exact:false}).click()
+  assert.equal(await page.locator('.app-response').count(),0)
+  await screenshot(page,`${device}-guided-reset`)
+  await (device==='mobile'?page.locator('.mobile-task button'):page.getByRole('button',{name:'Try the ordinary request',exact:false})).click()
+  await (device==='mobile'?page.locator('.mobile-task button'):page.getByRole('button',{name:'Try the ready variation',exact:false})).click()
+  await (device==='mobile'?page.locator('.mobile-task button'):page.getByRole('button',{name:'Apply the boundary',exact:false})).click()
+  await (device==='mobile'?page.locator('.mobile-task button'):page.getByRole('button',{name:'Check my understanding',exact:false})).click()
+  assert.equal(await page.getByRole('tab',{name:'Check understanding',exact:true}).getAttribute('aria-selected'),'true')
   for(const dark of [true,false]){
    await page.evaluate(dark=>{const raw=JSON.parse(localStorage.getItem('websec-decompiled:rebuild:v1'));localStorage.setItem('websec-decompiled:rebuild:v1',JSON.stringify({...raw,palette:'ocean',dark}))},dark)
    await page.reload();await page.waitForFunction(dark=>document.documentElement.classList.contains('dark')===dark,dark);await page.goto(base+'#/learn/sql-injection/0')
    for(const name of ['Experiment','Follow the trace','Check understanding','Transfer']){
-    await page.getByRole('tab',{name,exact:true}).click();await screenshot(page,`${device}-${dark?'dark':'light'}-sql-${name.replaceAll(' ','-')}`)
+    await page.getByRole('tab',{name,exact:true}).click();if(name==='Experiment'){await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click();await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()}await screenshot(page,`${device}-${dark?'dark':'light'}-sql-${name.replaceAll(' ','-')}`)
    }
   }
   await page.getByRole('tab',{name:'Experiment',exact:true}).focus();await page.keyboard.press('ArrowRight');assert.equal(await page.getByRole('tab',{name:'Follow the trace',exact:true}).getAttribute('aria-selected'),'true')
   await page.getByRole('tab',{name:'Experiment',exact:true}).click()
-  await page.getByRole('button',{name:'Edit this experiment'}).click()
-  await page.getByRole('button',{name:'Load boundary probe'}).click()
-  assert(await page.locator('.mini-system pre').last().innerText().then(t=>t.includes('not released')))
+  await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
+  await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()
+  assert(await page.locator('.mini-system .app-response').getAttribute('data-observation').then(t=>t.includes('not released')))
   await page.getByRole('checkbox',{name:'Enforce the boundary'}).check()
-  assert(await page.locator('.mini-system pre').last().innerText().then(t=>!t.includes('not released')))
+  assert(await page.locator('.mini-system .app-response').getAttribute('data-observation').then(t=>!t.includes('not released')))
   await screenshot(page,`${device}-editable-sql`)
-  await page.getByRole('tab',{name:'Follow the trace',exact:true}).click();await page.getByText('Take this mechanism to a CTF',{exact:true}).click();await page.getByRole('button',{name:'Use tools',exact:true}).click();await screenshot(page,`${device}-practical-guide`);await page.getByRole('tab',{name:'Experiment',exact:true}).click()
+  const keptObservation=await page.locator('.mini-system .app-response').getAttribute('data-observation')
+  await page.getByRole('tab',{name:'Follow the trace',exact:true}).click();await page.getByText('Take this mechanism to a CTF',{exact:true}).click();await page.getByRole('button',{name:'Use tools',exact:true}).click();await screenshot(page,`${device}-practical-guide`);await page.getByRole('tab',{name:'Experiment',exact:true}).click();assert.equal(await page.locator('.mini-system .app-response').getAttribute('data-observation'),keptObservation)
   // Exercise every lesson's own control/probe configuration in a real browser.
   for(const m of modules)for(const [index,system] of lessonSystems[m.id].entries()){
    await page.goto(base+`#/learn/${m.id}/${index}`)
-   await page.getByRole('button',{name:'Load control',exact:true}).click()
-   await page.getByRole('button',{name:'Load boundary probe',exact:true}).click()
-   const observation=await page.locator('.mini-system pre').last().innerText()
+   await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
+   await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()
+   const observation=await page.locator('.mini-system .app-response').getAttribute('data-observation')
    assert(!observation.startsWith('Input rejected'),m.id+':'+index+' rejected its preset')
    const boundary=page.getByRole('checkbox',{name:'Enforce the boundary',exact:true})
    if(await boundary.count())await boundary.check()
+   assert(await page.evaluate(id=>Boolean(JSON.parse(localStorage.getItem('websec-decompiled:rebuild:v1')).explored[id]),`${m.id}:${index}`),`${device} ${m.id}:${index}: guided comparison did not unlock the concept check`)
    if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))failures.push(`${device}-${m.id}-${index}: overflow`)
    if(['xss','request-smuggling','jwt','deserialization','cache-poisoning'].includes(m.id)&&index===m.lessons.length-1)await screenshot(page,`${device}-${m.id}-advanced`)
   }

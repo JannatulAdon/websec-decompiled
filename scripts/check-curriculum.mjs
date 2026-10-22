@@ -5,6 +5,8 @@ import {playbooks} from '../.vitepress/theme/rebuilt/playbooks.js'
 import {lessonSystems} from '../.vitepress/theme/rebuilt/experiments/index.js'
 import {preparationMap} from '../.vitepress/theme/rebuilt/preparation-map.js'
 import {missions} from '../.vitepress/theme/rebuilt/missions.js'
+import {missionExamples} from '../.vitepress/theme/rebuilt/mission-examples.js'
+import {examplesFor} from '../.vitepress/theme/rebuilt/interaction.js'
 import { systems } from '../.vitepress/theme/rebuilt/systems.js'
 import { sqlModel,pathModel } from '../.vitepress/theme/rebuilt/models.js'
 import { normalize, normalizeLegacy } from '../.vitepress/theme/rebuilt/store.js'
@@ -32,6 +34,13 @@ for(const module of modules){if(['xss','dom'].includes(module.id))continue;for(c
 assert.equal(Object.keys(preparationMap).length,academyLabs.length)
 for(const [labId,record] of Object.entries(preparationMap)){assert(academyLabs.some(l=>l.id===labId));for(const skill of record.skills)assert(ids.has(skill),`Unknown skill ${skill}`)}
 for(const mission of missions){const result=mission.run(mission.request);assert(result.output);assert(!result.evidence,`Baseline should not reveal ${mission.id}`)}
+for(const [moduleId,models] of Object.entries(lessonSystems))for(const [index,model] of models.entries())for(const field of model.fields){
+ const examples=examplesFor(model,moduleId,index,field)
+ assert(examples.includes(String(model.control[field.key])),`${moduleId}:${index}: missing ordinary example`)
+ assert(examples.includes(String(model.probe[field.key])),`${moduleId}:${index}: missing changed example`)
+ assert.equal(new Set(examples).size,examples.length)
+}
+for(const mission of missions){assert(missionExamples[mission.id]?.length>=2);for(const example of missionExamples[mission.id])assert(mission.run({...mission.request,...example}).output,`${mission.id}: broken ready request`)}
 assert.equal(ids.size,lessonCount)
 assert.equal(new Set(academyLabs.map(l=>l.id)).size,272)
 for(const lab of academyLabs){assert(preparation(lab).length,`No prep for ${lab.id}`);assert(preparation(lab).every(l=>ids.has(l.id)));assert.match(lab.url,/^https:\/\/portswigger.net\/web-security\//)}

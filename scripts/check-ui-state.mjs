@@ -6,13 +6,13 @@ import assert from 'node:assert/strict'
 import {parse,compileScript} from '@vue/compiler-sfc'
 const root=resolve('.vitepress/theme/rebuilt'),out=resolve('.vitepress/cache/ui-state')
 await mkdir(out,{recursive:true})
-for(const name of ['LearningApp','MiniSystem','Sandbox','PlainText','InvestigationDesk','PracticeGuide']){
+for(const name of ['LearningApp','MiniSystem','Sandbox','PlainText','InvestigationDesk','PracticeGuide','AppResponse','HomeDemo']){
  const filename=resolve(root,name+'.vue'),source=await readFile(filename,'utf8')
  const {descriptor}=parse(source,{filename});const compiled=compileScript(descriptor,{id:name,inlineTemplate:true,templateOptions:{compilerOptions:{hoistStatic:false,cacheHandlers:false}}})
  const code=compiled.content.replace(/from\s+(['"])(\.[^'"]+)\1/g,(_,quote,spec)=>'from '+JSON.stringify(spec.endsWith('.vue')?'./'+basename(spec,'.vue')+'.mjs':pathToFileURL(resolve(dirname(filename),spec)).href))
  await writeFile(resolve(out,name+'.mjs'),code)
 }
-function element(type){const n={type,props:{},children:[],parent:null,value:'',checked:false,selected:false,addEventListener(){},removeEventListener(){},setAttribute(k,v){this.props[k]=v},removeAttribute(k){delete this.props[k]},focus(){},getRootNode(){return globalThis.document},get tagName(){return this.type.toUpperCase()},get options(){return this.children.filter(c=>c.type==='option')},get multiple(){return Boolean(this.props.multiple)}};return n}
+function element(type){const n={type,props:{},style:{},children:[],parent:null,value:'',checked:false,selected:false,addEventListener(){},removeEventListener(){},setAttribute(k,v){this.props[k]=v},removeAttribute(k){delete this.props[k]},focus(){},getRootNode(){return globalThis.document},get tagName(){return this.type.toUpperCase()},get options(){return this.children.filter(c=>c.type==='option')},get multiple(){return Boolean(this.props.multiple)}};return n}
 const storage=new Map([['websec-decompiled:progress:v1',JSON.stringify({labs:{'lab-retrieve-hidden-data':{done:true}},notes:{labs:{'lab-retrieve-hidden-data':'old evidence kept'}},ui:{themePalette:'indigo'}})]])
 globalThis.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)}
 const listeners={};let hash=''
@@ -42,8 +42,8 @@ try{
  await tick();assert(state.labs['lab-retrieve-hidden-data']);assert.equal(state.notes['lab-retrieve-hidden-data'],'old evidence kept');assert.equal(state.palette,'indigo')
  await route('/path');assert.equal(all().filter(n=>n.props.class==='module-row').length,35)
  await route('/learn/sql-injection/0');assert(find('h1','SQL injection'))
- await click(find('button','Load boundary probe'));assert(find('pre','not released'))
- const boundary=all().find(n=>n.type==='input'&&n.props.type==='checkbox'&&n.props['onUpdate:modelValue']);boundary.props['onUpdate:modelValue'](true);boundary.props.onChange?.();await tick();assert(!all().filter(n=>n.type==='pre').some(n=>text(n).includes('not released')))
+ await click(all().find(n=>n.props['aria-label']==='Ordinary request (load control)'));await click(all().find(n=>n.props['aria-label']==='Try a variation (load boundary probe)'));assert(all().some(n=>n.props['data-observation']?.includes('not released')))
+ const boundary=all().find(n=>n.type==='input'&&n.props.type==='checkbox'&&n.props['onUpdate:modelValue']);boundary.props['onUpdate:modelValue'](true);boundary.props.onChange?.();await tick();assert(!all().some(n=>n.props['data-observation']?.includes('not released')))
  await click(find('button','Check understanding'))
  const l=modules.find(m=>m.id==='sql-injection').lessons[0]
  await click(find('button',l.evidence));await click(find('button',l.mechanism));await click(find('button','Save check & continue'))
