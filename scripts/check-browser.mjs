@@ -95,6 +95,7 @@ try{
   assert(await page.locator('.mini-system .app-response').getAttribute('data-observation').then(t=>t.includes('not released')))
   await page.getByRole('checkbox',{name:'Enforce the boundary'}).check()
   assert(await page.locator('.mini-system .app-response').getAttribute('data-observation').then(t=>!t.includes('not released')))
+  assert(!(await page.locator('.app-response').getAttribute('class')).includes('response-denied'),'An empty SQL result is not a rejected request')
   await screenshot(page,`${device}-editable-sql`)
   const keptObservation=await page.locator('.mini-system .app-response').getAttribute('data-observation')
   await page.getByRole('tab',{name:'Follow the trace',exact:true}).click();await page.getByText('Take this mechanism to a CTF',{exact:true}).click();await page.getByRole('button',{name:'Use tools',exact:true}).click();await screenshot(page,`${device}-practical-guide`);await page.getByRole('tab',{name:'Experiment',exact:true}).click();assert.equal(await page.locator('.mini-system .app-response').getAttribute('data-observation'),keptObservation)

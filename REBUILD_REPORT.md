@@ -10,7 +10,7 @@ Product, catalogue, invoice, and checkout previews derive their contents from ac
 
 The lesson sidebar is replaced by a compact selector with previous/next navigation. Analogies and background material remain available on demand. A compact phone task bar keeps guidance close to the app, with fuller explanations below it. The homepage includes an editable product-ID demonstration, and all six fictional investigation workspaces offer optional ready requests. Existing learning records and lab completion records retain their storage schema.
 
-Browser verification covers ready examples, custom edits, boundary comparison, reset, guided continuation, experiment preservation across tabs, the homepage interaction, all 176 lesson presets on both device profiles, normal/hover button contrast, selected-example contrast in all eight theme combinations, and the existing practice/backup flows. An insufficient light-espresso example contrast was found and corrected during verification.
+Browser verification covers ready examples, custom edits, boundary comparison, reset, guided continuation, experiment preservation across tabs, the homepage interaction, all 176 lesson presets on both device profiles, normal/hover button contrast, selected-example contrast in all eight theme combinations, and the existing practice/backup flows. An insufficient light-espresso example contrast was found and corrected during verification. Final review also corrected the presentation of empty query results so they are not labelled as rejected requests.
 
 ## Learning coverage
 
