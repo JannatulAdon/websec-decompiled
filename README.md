@@ -6,9 +6,9 @@ The new application replaces the old theme and lesson interface. It uses a newly
 
 ## Current learning-design iteration
 
-Broader redesign work is paused for user feedback. The second topic, Encoding & parser boundaries, has an isolated beginner sample at `#/sample/encoding`, linked from its module page. It uses a new light/dark workshop design and seven guided screens covering URL spelling, one-pass decoding, repeated encoding, validation order, and transfer questions. This is a small lesson for review, not a completed replacement of the whole encoding module. It does not award concept checks or lab completion.
+Broader redesign work is paused for user feedback. The second topic, Encoding & parser boundaries, has an isolated beginner sample at `#/sample/encoding`, linked from its module page. It uses a new light/dark workshop design and two short parts: a named photo website with a browser-to-server filename journey, then one quick check. Repeated decoding and validation order are optional follow-up material. This is a small lesson for review, not a completed replacement of the whole encoding module. It does not award concept checks or lab completion.
 
-`npm run check:sample` exercises the full sample on desktop/mobile in light/dark against a temporary static server at `QA_BASE_URL`, using the same Playwright/Chromium environment variables as the other browser checks. Evidence is in `artifacts/encoding-sample/`.
+`npm run check:sample` exercises the full sample on desktop/mobile in light/dark against a temporary static server at `QA_BASE_URL`, using the same Playwright/Chromium environment variables as the other browser checks. Evidence is in `artifacts/encoding-sample-v2/`.
 
 ## Learning experience
 
