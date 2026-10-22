@@ -44,7 +44,8 @@ for (const page of pages) {
       const mod = modules.find(m => m.id === route[1])
       const lesson = route[2] === undefined ? 0 : Number(route[2])
       const learn = route[0] === 'learn' && mod && route.length <= 3 && Number.isInteger(lesson) && lesson >= 0 && lesson < mod.lessons.length
-      if (!simple && !learn) errors.push(`${relative(dist, page)}: unknown application route ${href}`)
+      const sample = route[0] === 'sample' && route[1] === 'encoding' && route.length === 2
+      if (!simple && !learn && !sample) errors.push(`${relative(dist, page)}: unknown application route ${href}`)
       checked++
       continue
     }

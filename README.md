@@ -4,6 +4,12 @@ A browser-local web security learning platform for learning how to investigate u
 
 The new application replaces the old theme and lesson interface. It uses a newly authored curriculum and retains the factual catalogue of 272 Academy lab links. Original Markdown and lesson components remain in source as an archive; the production build excludes them. Existing public URLs redirect into the new curriculum.
 
+## Current learning-design iteration
+
+Broader redesign work is paused for user feedback. The second topic, Encoding & parser boundaries, has an isolated beginner sample at `#/sample/encoding`, linked from its module page. It uses a new light/dark workshop design and seven guided screens covering URL spelling, one-pass decoding, repeated encoding, validation order, and transfer questions. This is a small lesson for review, not a completed replacement of the whole encoding module. It does not award concept checks or lab completion.
+
+`npm run check:sample` exercises the full sample on desktop/mobile in light/dark against a temporary static server at `QA_BASE_URL`, using the same Playwright/Chromium environment variables as the other browser checks. Evidence is in `artifacts/encoding-sample/`.
+
 ## Learning experience
 
 - 35 modules in 7 stages, beginning with HTTP, sessions, parsers, and controlled investigation.

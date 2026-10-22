@@ -10,6 +10,7 @@ import EvidenceLens from './EvidenceLens.vue'
 import PlainText from './PlainText.vue'
 import InvestigationDesk from './InvestigationDesk.vue'
 import PracticeGuide from './PracticeGuide.vue'
+import EncodingSample from './EncodingSample.vue'
 const props=defineProps({initialRoute:{type:String,default:'/'}})
 const route=ref(props.initialRoute), ready=ref(false),search=ref(''),stageFilter=ref('all'),mode=ref('experiment'),probe=ref('control'),step=ref(0),prediction=ref(null),boundary=ref(null),caseAnswer=ref(null),caseRevealed=ref(false),difficulty=ref('all'),labModule=ref('all'),hideSolved=ref(false),savedOnly=ref(false),labPage=ref(0),labOpen=ref(''),hintLevel=ref(0),toast=ref(''),mysteryId=ref('access-control'),themeOpen=ref(false),help=ref(false),experimentView=ref('model')
 const currentExperiment=ref(null)
@@ -56,7 +57,7 @@ function openLab(lab){labOpen.value=labOpen.value===lab.id?'':lab.id;hintLevel.v
 async function restore(event){try{await importData(event.target.files?.[0]);say('Backup merged. Existing learning records were kept.')}catch(e){say(e.message)}event.target.value=''}
 function applyTheme(){document.documentElement.dataset.atmosphere=state.palette;document.documentElement.classList.toggle('dark',state.dark);document.documentElement.style.colorScheme=state.dark?'dark':'light'}
 watch(()=>[state.palette,state.dark],()=>{if(ready.value)applyTheme()})
-watch(route,()=>{currentExperiment.value=null;mode.value='experiment';experimentView.value='model';probe.value='control';step.value=0;prediction.value=null;boundary.value=null;caseAnswer.value=null;caseRevealed.value=false;search.value='';themeOpen.value=false;toast.value='';clearTimeout(toastTimer);if(view.value==='learn')state.last=lesson.value.id;if(ready.value){window.scrollTo({top:0});document.title=(view.value==='learn'?module.value.title:view.value==='labs'?'Practice':view.value==='path'?'Learning path':'Learn to investigate')+' · Websec Decompiled';setTimeout(()=>{document.querySelector('main')?.focus({preventScroll:true});const rail=document.querySelector('.lesson-rail');const active=rail?.querySelector('[aria-current=step]');if(rail&&active&&rail.scrollWidth>rail.clientWidth)rail.scrollLeft+=active.getBoundingClientRect().left-rail.getBoundingClientRect().left-(rail.clientWidth-active.clientWidth)/2},0)}})
+watch(route,()=>{currentExperiment.value=null;mode.value='experiment';experimentView.value='model';probe.value='control';step.value=0;prediction.value=null;boundary.value=null;caseAnswer.value=null;caseRevealed.value=false;search.value='';themeOpen.value=false;toast.value='';clearTimeout(toastTimer);if(view.value==='learn')state.last=lesson.value.id;if(ready.value){window.scrollTo({top:0});document.title=(view.value==='sample'?'Encoding from zero · Learning sample':view.value==='learn'?module.value.title:view.value==='labs'?'Practice':view.value==='path'?'Learning path':'Learn to investigate')+' · Websec Decompiled';setTimeout(()=>{document.querySelector('main')?.focus({preventScroll:true});const rail=document.querySelector('.lesson-rail');const active=rail?.querySelector('[aria-current=step]');if(rail&&active&&rail.scrollWidth>rail.clientWidth)rail.scrollLeft+=active.getBoundingClientRect().left-rail.getBoundingClientRect().left-(rail.clientWidth-active.clientWidth)/2},0)}})
 onMounted(()=>{hydrate();ready.value=true;const raw=window.location.hash;if(!raw.startsWith('#/')){const slug=window.location.pathname.split('/').filter(Boolean).filter(p=>p!=='websec-decompiled'&&p!=='index.html')[0];if(slug&&modules.some(m=>m.id===slug))window.history.replaceState(null,'',link(slug));else if(slug==='glossary')window.history.replaceState(null,'','#/reference')}readRoute();applyTheme();newMystery();window.addEventListener('hashchange',readRoute)})
 onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);clearTimeout(toastTimer)})
 </script>
@@ -64,14 +65,15 @@ onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);clearTimeout
 <template>
 <div class="academy">
 <button class="skip" type="button" aria-controls="workspace" @click="skipToWorkspace">Skip to learning workspace</button>
-<header class="topbar">
+<header v-if="view!=='sample'" class="topbar">
  <a class="brand" href="#/" aria-label="Websec Decompiled home"><span class="brand-mark">w<span>:</span></span><span>websec<span class="brand-sub">decompiled</span></span></a>
  <nav aria-label="Main navigation"><a href="#/path" :aria-current="view==='path'||view==='learn'?'page':undefined">Learn</a><a href="#/labs" :aria-current="view==='labs'?'page':undefined">Practice</a><a href="#/mystery" :aria-current="view==='mystery'?'page':undefined">Investigate</a><a href="#/reference" :aria-current="view==='reference'?'page':undefined">Field notes</a></nav>
  <div class="header-tools"><a class="progress-link" href="#/progress" :aria-label="`${doneCount} of ${lessonCount} lessons checked`"><span class="tiny-progress" :style="{'--progress':percent+'%'}"></span><span>{{percent}}%</span></a><div class="theme-wrap"><button class="icon-button" aria-label="Appearance settings" :aria-expanded="themeOpen" @click="themeOpen=!themeOpen">◐</button><div v-if="themeOpen" class="theme-panel"><strong>Your atmosphere</strong><button v-for="(name,id) in {ocean:'Ocean slate',sage:'Matcha forest',indigo:'Velvet indigo',espresso:'Warm espresso'}" :key="id" :aria-pressed="state.palette===id" @click="state.palette=id"><i :class="id"></i>{{name}}<span v-if="state.palette===id">✓</span></button><button @click="state.dark=!state.dark">{{state.dark?'☀ Switch to light':'☾ Switch to dark'}}</button></div></div></div>
 </header>
 <div v-if="storageStatus.error" class="storage-warning" role="status">{{storageStatus.error}} <button @click="exportData">Export now</button></div>
-<main id="workspace" :class="{'learning-workspace':view==='learn'}" tabindex="-1">
-<template v-if="view==='home'">
+<main id="workspace" :class="{'learning-workspace':view==='learn','sample-workspace':view==='sample'}" tabindex="-1">
+<EncodingSample v-if="view==='sample'&&parts[1]==='encoding'" />
+<template v-else-if="view==='home'">
  <section class="home-hero"><div class="hero-story"><div class="eyebrow"><span class="status-dot"></span> YOUR WEB SECURITY FIELD GUIDE</div><h1>Learn the <em>why.</em><br>Find the way in.</h1><p class="hero-copy">Build the instincts behind the exploit. Small experiments, visible cause and effect, and a path from your first request to an unfamiliar CTF.</p><div class="hero-actions"><a class="button primary" :href="link(next.m.id,next.i)">{{doneCount?'Continue learning':'Start with the fundamentals'}} <span>↗</span></a><a class="quiet-link" href="#/path">Explore the full path <span>→</span></a></div><div class="hero-meta"><span>{{modules.length}} modules</span><span>{{lessonCount}} concept experiments</span><span>{{academyLabs.length}} linked Academy labs</span></div>
  </div><HomeDemo /></section>
  <section class="continue-card"><div><div class="eyebrow">{{doneCount?'PICK UP YOUR THREAD':'YOUR FIRST INVESTIGATION'}}</div><h2>{{next.m.title}}</h2><p>{{next.m.lessons[next.i].title}} <span class="muted">· lesson {{next.i+1}} of {{next.m.lessons.length}}</span></p></div><a class="circle-link" :href="link(next.m.id,next.i)" aria-label="Continue recommended lesson">↗</a></section>
@@ -89,6 +91,7 @@ onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);clearTimeout
 <template v-else-if="view==='learn'">
  <div class="lesson-breadcrumb"><a href="#/path">Learning path</a><span>/</span><span>{{activeStage.number}} · {{activeStage.title}}</span></div>
  <div class="lesson-heading"><div><div class="eyebrow">{{module.lessons.length}} EXPERIMENTS · {{module.lessons.filter(l=>state.done[l.id]).length}} CHECKED</div><h1>{{module.title}}</h1></div><button class="quiet-button" @click="help=!help" :aria-expanded="help">{{help?'Close analogy':'Everyday analogy'}} <span>↗</span></button></div>
+ <a v-if="module.id==='encoding'" class="encoding-sample-invite" href="#/sample/encoding"><span>NEW LEARNING SAMPLE</span><strong>Start encoding from zero</strong><span>A guided visual lesson, one small idea at a time. →</span></a>
  <aside v-if="help" class="analogy"><span>THINK OF IT THIS WAY</span><p><PlainText :text="module.analogy" /></p></aside>
  <div class="lesson-switcher"><label for="lesson-select">Investigating <select id="lesson-select" :value="lessonIndex" @change="go('/learn/'+module.id+'/'+$event.target.value)"><option v-for="(l,i) in module.lessons" :key="l.id" :value="i">{{state.done[l.id]?'✓ ':''}}{{i+1}}. {{l.title}}</option></select></label><span>{{lessonIndex+1}} / {{module.lessons.length}}</span><a :href="link(module.id,Math.max(0,lessonIndex-1))" aria-label="Previous experiment" :aria-disabled="lessonIndex===0">←</a><a :href="lessonIndex<module.lessons.length-1?link(module.id,lessonIndex+1):'#/path'" aria-label="Next experiment">→</a></div>
  <div class="lesson-layout">
@@ -129,7 +132,7 @@ onUnmounted(()=>{window.removeEventListener('hashchange',readRoute);clearTimeout
 </template>
 <template v-else><div class="empty-state"><h1>That trail doesn’t exist.</h1><a class="button primary" href="#/path">Return to the learning path →</a></div></template>
 </main>
-<footer class="footer"><a class="footer-brand" href="#/">websec <span>decompiled</span></a><p>Understand the boundary. Follow the evidence.</p><a href="#/progress">Your progress & backups ↗</a></footer>
+<footer v-if="view!=='sample'" class="footer"><a class="footer-brand" href="#/">websec <span>decompiled</span></a><p>Understand the boundary. Follow the evidence.</p><a href="#/progress">Your progress & backups ↗</a></footer>
 <div v-if="toast" class="toast" role="status">{{toast}}</div>
 </div>
 </template>
