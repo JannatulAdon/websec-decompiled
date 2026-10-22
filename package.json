@@ -10,13 +10,15 @@
     "preview": "vitepress preview",
     "check:labs": "node scripts/check-labs.mjs",
     "check:links": "node scripts/check-links.mjs",
-    "verify": "npm run check:curriculum && npm run check:ui && npm run check:labs && npm run build && npm run check:links",
+    "verify": "npm run check:curriculum && npm run check:visuals && npm run check:ui && npm run check:labs && npm run build && npm run check:links",
     "check:urls": "node scripts/check-urls.mjs",
     "prebuild": "node scripts/clean-build.mjs",
     "check:curriculum": "node scripts/check-curriculum.mjs",
     "check:browser": "node scripts/check-browser.mjs",
     "check:ui": "node scripts/check-ui-state.mjs",
-    "postbuild": "node scripts/build-redirects.mjs"
+    "postbuild": "node scripts/build-redirects.mjs",
+    "check:visuals": "node scripts/check-visuals.mjs",
+    "check:scenes": "node scripts/check-scenes.mjs"
   },
   "devDependencies": {
     "markdown-it-container": "^3.0.0",

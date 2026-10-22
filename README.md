@@ -13,6 +13,9 @@ The new application replaces the old theme and lesson interface. It uses a newly
 - 272 searchable Academy lab links with relevant concept lessons, investigation prompts, bookmarks, solved records, and notes. Every retained lab has an explicit prerequisite map; links teach mechanisms without revealing challenge solutions.
 - A small fictional app is the main lesson workspace. A three-step coach suggests the next action; recent requests can be replayed, and experiments survive lesson-tab changes. Mobile layouts place a compact task prompt before the app.
 - An interactive product-ID example on the homepage and optional ready requests in all six fictional investigations.
+- Live mechanism diagrams show actual routes, query matches, resolved paths, ownership gates, parsed elements, network destinations, cache reuse, request boundaries, shared-state races, and balance changes. Other lessons render their actual checkpoints as a connected decision flow.
+- Step through reported checkpoints, compare any recent request, and distinguish changed inputs, interpretation, and response. Optional live preview runs custom edits after a short pause; unsent drafts remain clearly separate from the last observation.
+- Investigation requests, evidence logs, and notebook drafts survive mode changes, workspace switches, and reloads in the same browser.
 - Four atmosphere palettes in dark and light modes; responsive layouts; keyboard-operated lesson tabs and inline term definitions.
 - Separate concept checks, transfer checks, solved labs, notes, JSON backups, legacy progress migration, and three-day review scheduling.
 
@@ -28,12 +31,15 @@ BASE_PATH=/websec-decompiled/ npm run verify
 
 The prebuild script cleans generated output once. VitePress's parallel client/server bundles must not race to clean the same NTFS directory.
 
+Investigation drafts use `websec-decompiled:investigation-drafts:v1`; they stay in this browser and are separate from exported checked progress. Saved investigation records remain in progress backups.
+
 Progress stays in the browser under `websec-decompiled:rebuild:v1`. The older storage keys are read for migration and left untouched. Old XP does not become a new concept or transfer check. Importing backups merges progress; there is no reset operation in the UI.
 
 ## Verification
 
 ```sh
 npm run check:curriculum
+npm run check:visuals
 npm run check:ui
 npm run check:labs
 BASE_PATH=/websec-decompiled/ npm run build
@@ -41,17 +47,21 @@ npm run check:links
 npm run check:browser
 ```
 
-`check:curriculum` validates records, preparation mappings, local model invariants, parser behavior, and backup normalization. `check:ui` compiles the actual Vue components into a custom renderer to test state and event flows; it is not a browser or layout test. `check:labs` retains the legacy source-catalogue integrity audit. `check:links` understands both generated files and application routes.
+`check:visuals` checks diagram facts against model results, including query binding, ownership, paths, request framing, all 24 race orderings, comparisons, and draft validation. `check:curriculum` validates records, preparation mappings, local model invariants, parser behavior, and backup normalization. `check:ui` compiles the actual Vue components into a custom renderer to test state and event flows; it is not a browser or layout test. `check:labs` retains the legacy source-catalogue integrity audit. `check:links` understands both generated files and application routes.
 
 `check:browser` needs Playwright and Chromium in an environment that permits browser processes. It serves built files through Playwright request interception, so it needs no background HTTP server by default. Set `QA_BASE_URL` to exercise a temporary static server instead. If Playwright is supplied outside this project's module resolution, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path. Optionally set `CHROMIUM_PATH` to a Chromium executable. Screenshots and an explicit status report go into `artifacts/browser/`.
 
 Before publication, personally inspect the generated screenshots at 1440×900 and 390×844, across all four palettes in dark/light modes and the lesson/practice interactions. A successful automated run alone does not establish visual quality. A blocked run records zero screenshots and must not be reported as visual verification.
+
+`npm run check:scenes` uses a temporary static server at `QA_BASE_URL` (default port 4173), with the same browser environment variables. It captures thirteen scene kinds on desktop/mobile in dark/light modes and verifies equal-response interpretation differences. See `AUDIT_REPORT.md` for the independent review and resulting fixes.
 
 ## Source map
 
 - `.vitepress/theme/rebuilt/LearningApp.vue`: application shell, routing, learning modes, practice, reference, progress.
 - `.vitepress/theme/rebuilt/curriculum.js`: new lessons, stages, lab-preparation relevance rules.
 - `.vitepress/theme/rebuilt/MiniSystem.vue`: guided tasks, input choices, local model execution, comparisons, request history.
+- `.vitepress/theme/rebuilt/EvidenceLens.vue`, `ModelScene.vue`, and `visual-data.js`: live diagrams, actual checkpoints, immutable request comparisons, and observation summaries.
+- `.vitepress/theme/rebuilt/investigation-drafts.js`: validated browser-local request/log/notebook restoration, separate from checked progress.
 - `.vitepress/theme/rebuilt/AppResponse.vue`: product, invoice, checkout, and tool response views driven by model results.
 - `.vitepress/theme/rebuilt/interaction.js`: input examples and fictional app presentation metadata.
 - `.vitepress/theme/rebuilt/experiments/`: lesson-specific executable models, including advanced variants.
@@ -61,7 +71,7 @@ Before publication, personally inspect the generated screenshots at 1440×900 an
 - `.vitepress/theme/rebuilt/models.js`: restricted SQL, virtual path, detached HTML-parser models.
 - `.vitepress/theme/rebuilt/cases.js`: scenario-based transfer assessments.
 - `.vitepress/theme/rebuilt/store.js`: progress schema, migration, notes, backup normalization.
-- `.vitepress/theme/rebuilt/style.css` and `guided.css`: theme tokens and responsive layouts.
+- `.vitepress/theme/rebuilt/style.css` `guided.css`, and `visual.css`: theme tokens and responsive layouts.
 
 ## Hosting
 

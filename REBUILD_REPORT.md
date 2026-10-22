@@ -2,6 +2,14 @@
 
 The guided investigation platform is published at https://jannatuladon.github.io/websec-decompiled/. Source and GitHub Pages updates retain repository history. The local release record in `artifacts/live-verification.json` records the deployed commit and live desktop/mobile checks; `artifacts/browser/status.json` records the verified production-build hash.
 
+## Live visualization update
+
+Every lesson now includes an evidence inspector driven by immutable request snapshots and actual model output. Thirteen scene kinds include routes, sessions, transformations, query matches, paths, ownership, balances, race ordering, inert parsed elements, virtual destinations, cache reuse, byte boundaries, and connected checkpoint flows. Click records or race operations for details, step through reported checkpoints, compare recent requests, or inspect the raw trace. Diagram changes use theme tokens and respect reduced motion.
+
+The inspector distinguishes input changes, interpretation changes, and response changes; equal responses cannot hide changed interpretation. Custom editors offer optional debounced live preview. Unsent edits stay labelled and never silently replace the displayed observation. Phone layouts place the same inspector between controls and response, with a compact current-effect prompt.
+
+An independent read-only browser audit identified navigation, state-loss, accessibility, and comparison issues. Fixes and verification details are in `AUDIT_REPORT.md`. Fictional investigation drafts now restore requests, bounded logs, hypotheses, and notes per workspace across reloads. Drafts remain separate from exported checked progress; saved investigation records retain backup support.
+
 ## Guided investigation update
 
 User feedback called for a more engaging experience with less empty space and less typing. Every lesson now opens a fictional app with ready input choices. Clicking an example runs the existing local model immediately; a custom editor remains available. The three-step coach supports an ordinary request, a changed condition, and a protected comparison when the model has a relevant boundary. Models without a protected branch use a two-condition comparison instead.
@@ -26,11 +34,12 @@ Browser verification covers ready examples, custom edits, boundary comparison, r
 
 Concept checks require interaction with the relevant experiment and correct evidence/mechanism answers. Module transfer checks, investigation records, and self-reported solved labs remain separate. Progress includes three-day review scheduling, notes, and JSON import/export. Old lab records, bookmarks, and topic/lab notes migrate without converting old XP into mastery.
 
-The layout provides one active lesson mode at a time, four atmosphere palettes in dark/light, mobile lesson navigation, keyboard-operated tabs, a functioning skip link, and reduced-motion support. Visual review caught and corrected analogy typography, headline wrapping, mobile active-lesson positioning, stale notifications, offscreen focus artifacts, and normal/hover button contrast.
+The layout provides one active lesson mode at a time, four atmosphere palettes in dark/light, mobile lesson navigation, keyboard-operated tabs, a functioning skip button, and reduced-motion support. Visual review caught and corrected analogy typography, headline wrapping, mobile active-lesson positioning, stale notifications, offscreen focus artifacts, and normal/hover button contrast.
 
 ## Verification evidence
 
 - `npm run check:curriculum`: 35 modules, 176 lesson records/models, 35 transfer cases, 35 practical guides, 6 workspaces, and 272 explicit preparation records pass structural and model checks.
+- `npm run check:visuals`: diagram/result agreement, all 24 race orderings, comparison facts, framing validation, and bounded draft restoration pass.
 - `npm run check:ui`: actual compiled Vue components pass route, model-input, protected-boundary, gated-completion, filtering, migration, and persistence tests.
 - `npm run check:labs`: retained archived source and catalogue remain internally consistent.
 - `BASE_PATH=/websec-decompiled/ npm run build`: production build passes.
@@ -38,15 +47,15 @@ The layout provides one active lesson mode at a time, four atmosphere palettes i
 - Playwright/Chromium against a temporary static server: every lesson’s control/probe and available protected branch exercised at 1440×900 and 390×844. No runtime errors or horizontal viewport overflow observed.
 - Browser checks cover all 272 practice entries across pagination, keyboard tab changes, transfer records, a fictional investigation, legacy redirects, and progress export/import.
 - Normal and hovered primary-button text contrast checked in every palette and dark/light mode.
-- 72 screenshots captured for the guided-investigation update. Theme/mode contact sheets and representative full-size experiment, advanced-topic, investigation, practice, and guide screenshots personally inspected.
+- Browser screenshots cover all eight palette/mode combinations, both device profiles, lesson modes, all thirteen visualization kinds in dark/light, and practice/reference/investigation flows. Contact sheets and representative full-size screenshots are personally inspected before publication; exact files and status are recorded in the local artifacts.
 
-Local evidence is in `artifacts/browser/status.json`, `artifacts/browser/`, and `artifacts/curriculum-audit.json`. These generated artifacts are excluded from source synchronization. The temporary server has been stopped. Live desktop/mobile smoke checks additionally verified asset loading, an advanced local experiment, practice search, and preparation-link navigation; two live screenshots are saved alongside the 72 pre-publication screenshots.
+Local evidence is in `artifacts/browser/status.json`, `artifacts/browser/`, and `artifacts/curriculum-audit.json`. These generated artifacts are excluded from source synchronization. The temporary server has been stopped. Live desktop/mobile smoke checks additionally verified asset loading, an advanced local experiment, practice search, and preparation-link navigation; two live screenshots are saved alongside pre-publication screenshots.
 
 ## Release implementation
 
 The active application is `.vitepress/theme/rebuilt/`. The former Markdown lessons and components remain archived in source for history; their walkthroughs are excluded from the production build. Thirty-six old learning URLs redirect into the new curriculum. Build output is cleaned once before VitePress runs its parallel bundles, preventing stale assets and internal handoff files from being published.
 
-Hosting remains GitHub Pages. Deployment and source synchronization use ordinary commits preserving branch history. The deployment commit is `7f2de58b1a8d48a9c68b529dc59bb7af2314e591` on `gh-pages`.
+Hosting remains GitHub Pages. Deployment and source synchronization use ordinary commits preserving branch history. The deployed `gh-pages` commit and live verification results are recorded in `artifacts/live-verification.json`.
 
 ## Scope
 

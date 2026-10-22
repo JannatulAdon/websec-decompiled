@@ -2,14 +2,14 @@
 import {computed} from 'vue'
 const props=defineProps({app:Object,values:Object,result:Object})
 const text=computed(()=>props.result?.output||'')
-const failed=computed(()=>/^(?:[45]\d\d|Rejected|Blocked|Denied|Input rejected)/i.test(text.value))
+const failed=computed(()=>['blocked','error'].includes(props.result?.status))
 const product=computed(()=>props.app.kind==='product'?'Field notebook':props.values.path==='/items/8'?'Cable tester':'Field notebook')
 const productOK=computed(()=>/^200:/.test(text.value))
 const invoiceOK=computed(()=>props.app.kind==='invoice'&&/^200:/.test(text.value))
 const rows=computed(()=>text.value.split('\n').filter(Boolean))
 </script>
 <template>
- <div class="app-response" :data-observation="text" :class="{'response-denied':failed}">
+ <div class="app-response" :data-observation="text" :class="{'response-denied':failed,'response-neutral':!result.status||result.status==='neutral'}">
   <div class="response-heading"><span class="response-signal" :class="{warning:failed}"></span><span>Response received</span><span class="local-badge">SIMULATED</span></div>
   <template v-if="(app.kind==='products'||app.kind==='product')&&productOK">
    <div class="shop-product"><div class="product-drawing" :class="{'cable-drawing':product==='Cable tester'}"><span>{{product==='Cable tester'?'⌁':'≡'}}</span></div><div><span class="app-kicker">FIELD ESSENTIALS</span><h4>{{product}}</h4><p>{{product==='Cable tester'?'Test the connection. Follow the signal.':'A place for observations and good questions.'}}</p><span class="app-item">Item {{values.product||values.path?.split('/').at(-1)}}</span></div></div>
