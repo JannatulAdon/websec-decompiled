@@ -1,58 +1,91 @@
 <script setup>
-import {computed,nextTick,ref} from 'vue'
-import SsrfNetwork from './SsrfNetwork.vue'
-import {PICTURE_URL,PRIVATE_URL,PRIVATE_CODE,fetchIllustration} from './ssrf-sample.js'
-const step=ref(0),night=ref(false),sequence=ref(0),answer=ref(null),wrongPicture=ref(null),fixed=ref(null)
-const results=ref({normal:null,direct:null,staff:null})
-const current=computed(()=>step.value===1?results.value.normal:step.value===2?(wrongPicture.value||results.value.direct):results.value.staff)
-const progress=computed(()=>step.value<=1?0:step.value===2?1:2)
-const answers=[
- {text:'My browser got permission to enter Studio’s private network.',correct:false,why:'Your browser’s access did not change. Its direct attempt was blocked. The request that reached the staff page came from Studio’s server.'},
- {text:'I changed the URL; Studio’s server fetched the staff page and sent its code back to me.',correct:true,why:'Yes. You controlled the destination, and Studio supplied the network access. That unintended server request exposed the staff preview code.'},
- {text:'Changing the URL bypassed a password on the staff page.',correct:false,why:'This example has no staff-page password to bypass. The boundary was network access: your browser could not reach the page, but Studio’s server could.'}
-]
-const passed=computed(()=>answer.value!==null&&answers[answer.value].correct)
-async function focusLesson(){await nextTick();const heading=document.getElementById('ssrf-step-title');heading?.focus({preventScroll:true});document.querySelector('.ssrf-tutor-current')?.scrollIntoView({block:'start',behavior:'auto'})}
-function runNormal(){results.value.normal=fetchIllustration({target:PICTURE_URL});sequence.value++;step.value=1;focusLesson()}
-function runDirect(){results.value.direct=fetchIllustration({target:PRIVATE_URL,via:'browser'});wrongPicture.value=null;sequence.value++;step.value=2;focusLesson()}
-function chooseTarget(staff){const result=fetchIllustration({target:staff?PRIVATE_URL:PICTURE_URL});sequence.value++;if(staff){results.value.staff=result;wrongPicture.value=null;step.value=3;focusLesson()}else wrongPicture.value=result}
-function check(){step.value=4;focusLesson()}
-function back(){if(step.value===2)wrongPicture.value=null;step.value--;sequence.value++;focusLesson()}
-function restart(){step.value=0;results.value={normal:null,direct:null,staff:null};wrongPicture.value=null;answer.value=null;fixed.value=null;sequence.value++;nextTick(()=>document.getElementById('ssrf-title')?.focus({preventScroll:true}));window.scrollTo({top:0})}
-function testFix(staff){fixed.value=fetchIllustration({target:staff?PRIVATE_URL:PICTURE_URL,restricted:true})}
+import {computed,ref,watch,onUnmounted,nextTick} from 'vue'
+import {PICTURE_URL,PRIVATE_URL,IMPORT_ENDPOINT,executeImport,directBrowserCheck} from './ssrf-runtime.js'
+import handlerText from './ssrf-handler.js?raw'
+const draft=ref(PICTURE_URL),picturesOnly=ref(false),night=ref(false),busy=ref(false),records=ref([]),snapshot=ref(null),previous=ref(null),direct=ref(null),checking=ref(false),view=ref('http'),pauseBeforeFetch=ref(false),paused=ref(false),imageURL=ref(''),sourceRequest=ref('current')
+const controlsOpen=ref(false)
+let generation=0,resumeExecution=null
+const codeLines=handlerText.trimEnd().split('\n')
+const submitted=computed(()=>records.value.find(e=>e.type==='browser-request')?.request)
+const outgoing=computed(()=>records.value.find(e=>e.type==='server-request')?.request)
+const upstream=computed(()=>records.value.find(e=>e.type==='server-response')?.response)
+const returned=computed(()=>records.value.find(e=>e.type==='browser-response')?.response)
+const dirty=computed(()=>Boolean(snapshot.value)&&(draft.value!==snapshot.value.url||picturesOnly.value!==snapshot.value.picturesOnly))
+const draftDirty=computed(()=>Boolean(snapshot.value)&&draft.value!==snapshot.value.url)
+const contentType=computed(()=>returned.value?.headers['content-type']||'')
+const internalReturned=computed(()=>Boolean(snapshot.value)&&[PRIVATE_URL,'https://staff.intra.test/preview'].includes(snapshot.value.url)&&returned.value?.status===200)
+const previewBody=computed(()=>JSON.stringify(draft.value))
+const previousGET=computed(()=>previous.value?.events.find(e=>e.type==='server-request')?.request)
+const sourceRecord=computed(()=>sourceRequest.value==='previous'&&previous.value?previous.value:snapshot.value)
+const variables=computed(()=>({url:sourceRecord.value?.url??'(not submitted)',destination:sourceRecord.value?.events.find(e=>e.type==='server-request')?.request.url??(paused.value?outgoing.value?.url:'(not called)'),picturesOnly:sourceRecord.value?.picturesOnly??picturesOnly.value}))
+const selectedLine=computed(()=>paused.value?'fetchUpstream(destination.href)':sourceRecord.value?.picturesOnly&&sourceRecord.value?.returned.status===403?"return new Response('Destination is not allowed.'":'fetchUpstream(destination.href)')
+const task=computed(()=>!snapshot.value?'Import the public image first. Then change the URL and compare the outgoing request.':returned.value?.status===403?'The destination check stopped this import before any outgoing GET. Try the public image with the same rule.':internalReturned.value?'Compare the outgoing GET and the returned body. The POST endpoint stayed the same; the supplied URL changed.':returned.value?.status===400?'Correct the URL, then submit again. The error below is the handler’s response.':'Next: select Internal URL, click Import again, and inspect which address the server requests.')
+watch(returned,result=>{if(imageURL.value){URL.revokeObjectURL(imageURL.value);imageURL.value=''}if(result?.image&&result.status===200)imageURL.value=URL.createObjectURL(new Blob([result.body],{type:result.headers['content-type']}))})
+function continueExecution(){const resume=resumeExecution;resumeExecution=null;paused.value=false;resume?.()}
+async function runImport(){
+ if(busy.value)return
+ const run=++generation,url=draft.value,policy=picturesOnly.value
+ checking.value=false
+ previous.value=snapshot.value;records.value=[];snapshot.value=null;sourceRequest.value='current';busy.value=true
+ try{
+  const result=await executeImport({url,picturesOnly:policy,onEvent:event=>{if(run===generation)records.value.push(event)},checkpoint:async event=>{if(run===generation&&pauseBeforeFetch.value&&event.type==='server-request'){paused.value=true;view.value='code';await new Promise(resolve=>resumeExecution=resolve)}}})
+  if(run===generation)snapshot.value=result
+ }finally{if(run===generation){busy.value=false;paused.value=false}}
+}
+async function checkDirect(){const run=generation,url=draft.value;checking.value=true;try{const result=await directBrowserCheck(url);if(run===generation)direct.value={url,...result}}catch{if(run===generation)direct.value={url,error:'Invalid URL.',response:null}}finally{if(run===generation)checking.value=false}}
+function reset(){generation++;continueExecution();busy.value=false;checking.value=false;controlsOpen.value=false;draft.value=PICTURE_URL;picturesOnly.value=false;pauseBeforeFetch.value=false;records.value=[];snapshot.value=null;previous.value=null;direct.value=null;view.value='http';sourceRequest.value='current'}
+onUnmounted(()=>{generation++;continueExecution();if(imageURL.value)URL.revokeObjectURL(imageURL.value)})
+async function inspectorKey(event){if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();view.value=event.key==='Home'?'http':event.key==='End'?'code':view.value==='http'?'code':'http';await nextTick();document.getElementById('sw-'+view.value+'-tab')?.focus()}
+function display(value){return value===''?'(empty body)':value}
 </script>
 <template>
-<div class="encoding-sample ssrf-sample ssrf-tutor" :class="{'sample-night':night}">
- <header class="sample-header"><a href="#/learn/ssrf/0" class="sample-brand"><span class="sample-mark" aria-hidden="true">w.</span><span>websec<span class="sample-brand-note">a learning workshop</span></span></a><div><span class="sample-edition">SSRF · guided example</span><button class="sample-appearance" :aria-label="night?'Use light appearance':'Use dark appearance'" @click="night=!night">{{night?'☀':'◐'}}</button></div></header>
- <div class="sample-wrap ssrf-wrap">
-  <div class="sample-topline"><span>LEARN SSRF <i>/</i> One goal, one action at a time</span><button @click="restart">Start again ↺</button></div>
-  <template v-if="step===0">
-   <section class="ssrf-welcome" aria-labelledby="ssrf-title">
-    <div class="ssrf-welcome-copy"><span class="sample-kicker">WHAT IT IS · WHAT YOU’LL TRY</span><h1 id="ssrf-title" tabindex="-1">What is SSRF?</h1><p><strong>SSRF</strong> means <strong>server-side request forgery</strong>. It is a security flaw: your input makes a website’s server request a place it was not meant to contact.</p><p>An attacker may use the server’s network access to read private information or reach internal actions.</p></div>
-    <section class="sample-card ssrf-start-card" aria-label="Your starting point"><div class="sample-card-heading"><span class="ssrf-studio-mark" aria-hidden="true">▧</span><h2>Postcard Studio</h2><span class="sample-card-note">fictional website</span></div><p>Studio imports pictures from links. Its server downloads the address you supply.</p><div class="ssrf-learning-goal"><span>YOUR GOAL</span><strong>Read a fictional staff preview code.</strong><p>You’ll use the picture importer to reach a staff page your own computer cannot reach.</p></div><p class="ssrf-first-instruction"><strong>First:</strong> see how the normal picture import works.</p><button class="sample-primary" @click="runNormal">Start: import a normal picture <span>→</span></button></section>
+<div class="encoding-sample ssrf-workbench" :class="{'sample-night':night}">
+ <header class="sample-header"><a href="#/learn/ssrf/0" class="sample-brand"><span class="sample-mark" aria-hidden="true">w.</span><span>websec<span class="sample-brand-note">security workbench</span></span></a><div><a class="sw-back" href="#/learn/ssrf/0">SSRF lessons ↗</a><button class="sample-appearance" :aria-label="night?'Use light appearance':'Use dark appearance'" @click="night=!night">{{night?'☀':'◐'}}</button></div></header>
+ <div class="sw-wrap">
+  <div class="sw-topline"><span>SSRF / REQUESTS, HANDLER, RESPONSE</span><button @click="reset">Reset workbench ↺</button></div>
+  <div class="sw-intro"><h1>Change the URL. Inspect the request.</h1><p><strong>SSRF</strong> happens when input you control makes an application’s server request an unintended address. Here, that input is the image URL.</p></div>
+  <div class="sw-task" role="status"><span>{{busy?'EXECUTING':'NEXT'}}</span>{{paused?'Paused at the outgoing fetch. Inspect the URL in the handler, then continue.':busy?'The handler is processing this submission.':task}}</div>
+  <div class="sw-workspace">
+   <section class="sw-application" aria-labelledby="import-title">
+    <div class="sw-panel-heading"><div><span class="sw-label">APPLICATION</span><h2 id="import-title">Image importer</h2></div><span class="sw-runtime">Local runtime</span></div>
+    <form class="sw-form" @submit.prevent="runImport">
+     <label for="ssrf-url">Image URL</label><input id="ssrf-url" v-model="draft" type="text" inputmode="url" autocomplete="off" spellcheck="false" maxlength="2000" :disabled="busy"/>
+     <div class="sw-examples" role="group" aria-label="Example URLs"><button type="button" :disabled="busy" :aria-pressed="draft===PICTURE_URL" @click="draft=PICTURE_URL">Public image</button><button type="button" :disabled="busy" :aria-pressed="draft===PRIVATE_URL" @click="draft=PRIVATE_URL">Internal URL</button></div>
+     <p class="sw-field-note">The internal URL is a staff page reachable from the server in this local environment.</p>
+     <div class="sw-draft"><span>POST body <b>{{draftDirty?'UNSENT CHANGES':submitted?'matches this form':'not sent yet'}}</b></span><code>{"url": <mark>{{previewBody}}</mark>}</code></div>
+     <div class="sw-submit-row"><button class="sample-primary" type="submit" :disabled="busy">{{busy?'Importing…':'Import'}} <span aria-hidden="true">→</span></button><button type="button" class="sw-direct" :disabled="busy||checking" @click="checkDirect">Test browser access</button></div>
+    </form>
+    <div v-if="direct" class="sw-direct-result" role="status"><span class="sw-label">DIRECT BROWSER CHECK</span><code>GET {{direct.url}}</code><p v-if="direct.error">{{direct.error}} <strong>No HTTP response was received.</strong></p><p v-else>HTTP {{direct.response.status}} · {{direct.response.headers['content-type']}}</p><small>This check does not use the importer or call its server handler.</small></div>
+    <section class="sw-import-result" aria-label="Application result" :data-status="returned?.status||'pending'">
+     <div class="sw-result-label"><span class="sw-label">{{dirty?'LAST SUBMISSION’S RESULT':'IMPORT RESULT'}}</span><span v-if="returned" class="sw-status">HTTP {{returned.status}}</span></div>
+     <div v-if="!returned" class="sw-empty"><strong>{{busy?'Waiting for the handler…':'No import submitted.'}}</strong><p>{{paused?'The handler is paused at fetchUpstream(destination.href). Continue in the code inspector.':'Use the form above. The importer’s response will appear here.'}}</p></div>
+     <img v-else-if="imageURL" :src="imageURL" class="sw-imported-image" alt="Image returned by the importer"/>
+     <div v-else-if="returned.status===200" class="sw-nonimage"><strong>The response is not an image.</strong><p>Received <code>{{contentType}}</code>. Inspect the returned body in the HTTP panel.</p><button @click="view='http'">View the response body →</button></div>
+     <pre v-else class="sw-error">{{returned.body}}</pre>
+     <p v-if="internalReturned" class="sw-impact"><strong>The interface did not display an image, but the server already sent the internal page’s contents back.</strong> The data is visible in the response body.</p>
+    </section>
+    <details class="sw-controls" :open="controlsOpen" @toggle="controlsOpen=$event.target.open"><summary>Request controls</summary><label><input type="checkbox" v-model="picturesOnly" :disabled="busy"/> Allow only the public picture origin</label><label><input type="checkbox" v-model="pauseBeforeFetch" :disabled="busy"/> Pause before the outgoing fetch</label><p>Applied on the next import. These controls change the handler’s policy or pause its awaited fetch.</p></details>
    </section>
-  </template>
-  <template v-else>
-   <div class="ssrf-goal-strip"><span>YOUR GOAL</span> Retrieve the staff preview code. <small>You remain an ordinary visitor throughout.</small></div>
-   <ol class="ssrf-story-progress" aria-label="Lesson progress"><li v-for="(label,index) in ['See the normal feature','Find the boundary','Use the server’s access']" :key="label" :aria-current="progress===index?'step':undefined" :class="{complete:progress>index}"><span>{{progress>index?'✓':index+1}}</span>{{label}}</li></ol>
-   <section class="ssrf-tutor-current" :data-lesson-step="step">
-    <div class="ssrf-current-heading"><span class="sample-kicker">{{step===1?'NORMAL BEHAVIOR':step===2?'THE OBSTACLE':step===3?'THE SECURITY FLAW':'CHECK THE IDEA'}}</span><h1 id="ssrf-step-title" tabindex="-1">{{step===1?'Studio fetched the public picture for you.':step===2?'Your browser cannot reach the staff page.':step===3?'Studio brought the staff code back to you.':'Why did the staff code reach you?'}}</h1></div>
-    <div class="ssrf-tutor-layout">
-     <SsrfNetwork :request="current" :sequence="sequence" :show-private="step>=2" :interactive="false" />
-     <section class="ssrf-coach-card" aria-label="Explanation and next action">
-      <template v-if="step===1"><h2>What just happened?</h2><p>Your browser sent Studio a <strong>picture address</strong>. <strong>Studio’s server</strong> then requested the picture and sent it back to you.</p><p>This is the feature working as intended. A server fetching a picture is ordinary behavior.</p><div class="ssrf-role-note"><strong>Browser ≠ website server</strong><span>Your browser runs on your computer. Studio’s server is the computer running the website.</span></div><h3>Now find the boundary.</h3><p>Studio also has a <strong>staff preview page</strong> inside its company network. That page contains the code we want. Try opening it from your own browser first.</p><div class="ssrf-address"><span>Staff page address · provided for this example</span><code>{{PRIVATE_URL}}</code></div><button class="sample-primary" @click="runDirect">Try opening the staff page directly <span>→</span></button></template>
-      <template v-else-if="step===2"><h2>Why did that fail?</h2><p>The staff page is inside Studio’s company network. <strong>Your computer has no route to it.</strong> Studio’s server is on that network and can reach it.</p><div class="ssrf-role-note"><strong>You still need the code.</strong><span>The picture importer lets you choose the address that Studio’s server opens. Can you make it open the staff page instead?</span></div><h3>Your move: choose what Studio should fetch.</h3><p>Use the same import feature. Change only the URL supplied to it.</p><div class="ssrf-target-choices" role="group" aria-label="Choose the destination for Studio’s server"><button @click="chooseTarget(false)"><strong>Ask Studio for the picture</strong><code>{{PICTURE_URL}}</code></button><button @click="chooseTarget(true)"><strong>Ask Studio for the staff page</strong><code>{{PRIVATE_URL}}</code></button></div><div v-if="wrongPicture" class="sample-feedback sample-retry" role="status"><strong>That still asks for the public picture.</strong><p>To test the boundary, give Studio the address your browser could not reach: the staff page.</p></div></template>
-      <template v-else-if="step===3"><div class="ssrf-success-label">GOAL REACHED · FICTIONAL DATA</div><h2>You obtained <code>{{PRIVATE_CODE}}</code>.</h2><p><strong>You changed the URL in the import request.</strong> Studio fetched the staff page using its own network access, then returned the page’s code to you.</p><div class="ssrf-route-comparison"><div><span>Your browser → staff page</span><strong>Could not reach it</strong></div><div><span>Your browser → Studio → staff page</span><strong>Code returned</strong></div></div><h3>That is SSRF.</h3><p>Your input made a <strong>server-side request</strong> go to an unintended destination. You used the server’s ability to reach a private page; your browser never gained direct access.</p><p class="ssrf-impact"><strong>Why it matters:</strong> private data or internal operations can become reachable through a public website’s vulnerable feature. Here, the impact is reading a dummy code.</p><button class="sample-primary" @click="check">Check why it worked <span>→</span></button></template>
-      <template v-else><p>You changed Studio’s import URL from a picture address to the staff page address. <strong>Why did that reveal the code?</strong></p><div class="sample-choices ssrf-understanding"><button v-for="(choice,index) in answers" :key="choice.text" :aria-pressed="answer===index" @click="answer=index"><span>{{String.fromCharCode(65+index)}}</span>{{choice.text}}</button></div><div v-if="answer!==null" class="sample-feedback" :class="{'sample-retry':!passed}" role="status"><strong>{{passed?'You identified the key step.':'Look at who made the staff-page request.'}}</strong><p>{{answers[answer].why}}</p></div><div v-if="passed" class="ssrf-core-summary"><strong>The idea to keep</strong><p><b>Your input chose the address. The server made the request. Private information came back through the website.</b></p><p>You’ve finished this introduction. The fix below is optional.</p></div></template>
-      <button class="sample-text-button ssrf-lesson-back" @click="back">← {{step===1?'Back to the introduction':'Revisit the previous moment'}}</button>
-     </section>
+   <section class="sw-inspector" aria-labelledby="inspector-title">
+    <div class="sw-panel-heading"><div><span class="sw-label">INSPECTOR</span><h2 id="inspector-title">What this submission does</h2></div><span v-if="busy" class="sw-runtime">{{paused?'Paused':'Running'}}</span></div>
+    <div class="sw-tabs" role="tablist" aria-label="Request inspector" @keydown="inspectorKey"><button id="sw-http-tab" role="tab" :tabindex="view==='http'?0:-1" :aria-selected="view==='http'" aria-controls="sw-http-panel" @click="view='http'">HTTP exchange</button><button id="sw-code-tab" role="tab" :tabindex="view==='code'?0:-1" :aria-selected="view==='code'" aria-controls="sw-code-panel" @click="view='code'">Executed handler</button></div>
+    <div v-show="view==='http'" id="sw-http-panel" role="tabpanel" aria-labelledby="sw-http-tab">
+     <section class="sw-http-record sw-client-request"><div class="sw-record-label"><span>1 · BROWSER SUBMITS TO IMPORTER</span><span>{{submitted?'submitted':'waiting'}}</span></div><div class="sw-request-line"><b>POST</b><code>{{IMPORT_ENDPOINT}}</code></div><template v-if="submitted"><div class="sw-headers"><span v-for="(value,key) in submitted.headers" :key="key">{{key}}: {{value}}</span></div><pre>{{submitted.body}}</pre><small>The endpoint stays the same. The supplied destination is inside the JSON body.</small></template><p v-else class="sw-waiting">Submit the form to inspect its actual Request object.</p></section>
+     <section class="sw-http-record sw-server-request"><div class="sw-record-label"><span>2 · SERVER REQUESTS THE SUPPLIED URL</span><span>{{paused?'paused before fetch':outgoing?'created':'no outgoing request'}}</span></div><template v-if="outgoing"><div class="sw-request-line"><b>GET</b><code><mark>{{outgoing.url}}</mark></code></div><div v-if="previousGET&&previousGET.url!==outgoing.url" class="sw-url-diff"><span>Previous GET</span><code>{{previousGET.url}}</code><span>Current GET</span><code>{{outgoing.url}}</code></div><small>This address is the argument passed to <code>fetchUpstream(destination.href)</code>.</small><div v-if="upstream" class="sw-upstream-status">Upstream returned HTTP {{upstream.status}} · {{upstream.headers['content-type']}}</div></template><p v-else class="sw-waiting">{{returned?.status===403?'The origin check returned 403 before fetchUpstream was called.':returned?.status===400?'The handler rejected the input before creating an outgoing request.':'The handler’s outgoing Request object will appear here.'}}</p></section>
+     <section class="sw-http-record sw-browser-response"><div class="sw-record-label"><span>3 · HANDLER RETURNS TO BROWSER</span><span>{{returned?'received':'waiting'}}</span></div><template v-if="returned"><div class="sw-response-line"><b>{{returned.status}}</b><code>{{contentType}}</code></div><details class="sw-response-headers"><summary>Response headers</summary><div class="sw-headers"><span v-for="(value,key) in returned.headers" :key="key">{{key}}: {{value}}</span></div></details><span class="sw-body-label">RESPONSE BODY</span><pre :class="{'sw-private-body':internalReturned}">{{display(returned.body)}}</pre><p v-if="internalReturned" class="sw-record-takeaway">The internal service’s data reached this browser through the importer’s response. This is the impact of the unintended server request.</p></template><p v-else class="sw-waiting">{{paused?'No response yet. Execution is paused before the upstream fetch.':'The returned Response object will appear here after an import.'}}</p></section>
+    </div>
+    <div v-show="view==='code'" id="sw-code-panel" role="tabpanel" aria-labelledby="sw-code-tab">
+     <div class="sw-source-top"><span>ssrf-handler.js</span><span>executed source</span></div><p class="sw-code-note">This is the source of the function used by the importer. The highlighted operation uses the submitted destination.</p>
+     <div class="sw-source" aria-label="Executed JavaScript handler"><div v-for="(line,index) in codeLines" :key="index" :class="{'sw-code-highlight':line.includes(selectedLine)}"><span>{{index+1}}</span><code>{{line}}</code></div></div>
+     <div class="sw-variables"><div class="sw-record-label"><span>{{paused?'PAUSED OPERATION’S VALUES':'SUBMISSION VALUES'}}</span><select v-if="previous&&snapshot" v-model="sourceRequest" aria-label="Submission to inspect"><option value="current">Current submission</option><option value="previous">Previous submission</option></select></div><dl><div><dt>url</dt><dd><code>{{paused?draft:variables.url}}</code></dd></div><div><dt>fetchUpstream argument</dt><dd><code>{{paused?outgoing?.url:variables.destination}}</code></dd></div><div><dt>picturesOnly</dt><dd><code>{{variables.picturesOnly}}</code></dd></div></dl></div>
+     <div v-if="paused" class="sw-paused" role="status"><strong>Paused before the upstream response is read.</strong><p>The handler is waiting at its <code>await fetchUpstream(...)</code> call.</p><button class="sample-primary" @click="continueExecution">Continue execution →</button></div>
+     <button v-else class="sw-show-http" @click="view='http'">Inspect the resulting HTTP exchange →</button>
     </div>
    </section>
-   <details v-if="step===4&&passed" class="sample-followup ssrf-fix"><summary>Optional: keep image import, stop the unintended fetch</summary><div class="sample-followup-content"><p>Imagine the server now allows requests only to <code>https://pictures.example.test</code>. Compare the same two destinations with that rule applied.</p><div class="ssrf-fix-actions"><button @click="testFix(true)">Try the staff address with the rule</button><button @click="testFix(false)">Try the picture address with the rule</button></div><div v-if="fixed" class="ssrf-fixed-result" :data-kind="fixed.kind" role="status"><strong>{{fixed.title}}</strong><p>{{fixed.explanation}}</p><p v-if="fixed.kind==='image'">The public picture still imports.</p></div><p>This fixed-address model illustrates a destination rule. Real defenses also need careful URL parsing, redirect and address checks, and network restrictions.</p></div></details>
-  </template>
-  <details class="ssrf-tutor-reference"><summary>Reference and model limits</summary><p>This is a local teaching model with provided addresses. No destination is contacted. The staff page relies on network isolation in this example and has no extra password. Real internal services may enforce separate permissions, and some SSRF does not return a visible response.</p><a href="https://portswigger.net/web-security/ssrf" target="_blank" rel="noopener noreferrer">Academy explanation of SSRF ↗</a></details>
-  <p class="sample-footnote">All addresses, routes, and codes are fictional. Your lesson and lab records stay separate.</p>
+  </div>
+  <details class="sw-environment"><summary>Execution environment and limits</summary><p>The form creates real JavaScript <code>Request</code> objects. The displayed handler executes locally and returns real <code>Response</code> objects. Its upstream transport serves fixed image and staff-page fixtures; these hostnames are not contacted. The browser-access check represents the different reachability of those two environments.</p><p>The source’s optional origin check demonstrates this fixed fixture’s policy. Real SSRF defenses also need URL, resolved-address, redirect, and network controls.</p><a href="https://portswigger.net/web-security/ssrf" target="_blank" rel="noopener noreferrer">SSRF technical reference ↗</a></details>
+  <p class="sw-footer-note">Local execution with fixture responses. This workbench does not change your lesson or lab records.</p>
  </div>
 </div>
 </template>
-<style src="./ssrf-sample.css"></style>
+<style src="./ssrf-workbench.css"></style>

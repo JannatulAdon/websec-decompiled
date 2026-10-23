@@ -1,3 +1,15 @@
+# SSRF technical workbench correction · 2026-10-23
+
+The SSRF sample now uses a functional import form with a technical HTTP inspector and the executed handler source. It replaces the illustrated network story at the same sample URL. The form’s URL becomes a POST body; the handler creates an outgoing GET and forwards its Response. The code view reads the actual source module, and the optional pause holds the actual awaited upstream operation.
+
+This executes locally with fixed upstream fixtures. It does not claim a hosted backend or real access to an internal network. An internal text response is visible in the response inspector while the image preview reports that it is not an image. The browser-access boundary, origin restriction, malformed input, unsent changes, and stale-execution cancellation are checked explicitly.
+
+Production verification passes curriculum, model invariants, handler/source integrity, compiled Vue state, the 272-lab catalogue audit, the build, and internal links. Playwright exercises desktop 1440×900 and mobile 390×844 in light/dark, including handler source agreement, real pause/resume, request/response records, normal-button and label contrast, keyboard tabs, unchanged learner records, and 32 screenshots personally reviewed before publication. Exact publication and live checks are recorded in `artifacts/live-verification.json`.
+
+Other lessons retain the previous interface until this focused technical approach is reviewed. Earlier release notes follow as history.
+
+---
+
 # Guided workshop update · 2026-10-23
 
 The user reported confusion about the previous learning sample, then authorized completing the broader platform autonomously. The default lesson now introduces the idea and purpose, names the setting, asks an individually authored question, and guides a starting-input / changed-input comparison. All 35 modules and 176 existing bounded experiments use this flow. The main explanations teach the mechanism; simulator implementation notes are optional.

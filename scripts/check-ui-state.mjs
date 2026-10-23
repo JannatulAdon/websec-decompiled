@@ -9,7 +9,9 @@ await mkdir(out,{recursive:true})
 for(const name of ['LearningApp','MiniSystem','Sandbox','PlainText','InvestigationDesk','PracticeGuide','AppResponse','HomeDemo','EvidenceLens','ModelScene','EncodingSample','SsrfSample','SsrfNetwork','GuidedLesson']){
  const filename=resolve(root,name+'.vue'),source=await readFile(filename,'utf8')
  const {descriptor}=parse(source,{filename});const compiled=compileScript(descriptor,{id:name,inlineTemplate:true,templateOptions:{compilerOptions:{hoistStatic:false,cacheHandlers:false}}})
- const code=compiled.content.replace(/from\s+(['"])(\.[^'"]+)\1/g,(_,quote,spec)=>'from '+JSON.stringify(spec.endsWith('.vue')?'./'+basename(spec,'.vue')+'.mjs':pathToFileURL(resolve(dirname(filename),spec)).href))
+ let content=compiled.content
+ for(const match of [...content.matchAll(/from\s+(['"])(\.[^'"]+\?raw)\1/g)]){const raw=await readFile(resolve(dirname(filename),match[2].slice(0,-4)),'utf8');content=content.replace(match[0],'from '+JSON.stringify('data:text/javascript;charset=utf-8,'+encodeURIComponent('export default '+JSON.stringify(raw))))}
+ const code=content.replace(/from\s+(['"])(\.[^'"]+)\1/g,(_,quote,spec)=>'from '+JSON.stringify(spec.endsWith('.vue')?'./'+basename(spec,'.vue')+'.mjs':pathToFileURL(resolve(dirname(filename),spec)).href))
  await writeFile(resolve(out,name+'.mjs'),code)
 }
 function element(type){const n={type,props:{},style:{},children:[],parent:null,value:'',checked:false,selected:false,addEventListener(){},removeEventListener(){},setAttribute(k,v){this.props[k]=v},removeAttribute(k){delete this.props[k]},focus(){},getRootNode(){return globalThis.document},get tagName(){return this.type.toUpperCase()},get options(){return this.children.filter(c=>c.type==='option')},get multiple(){return Boolean(this.props.multiple)}};return n}

@@ -49,3 +49,12 @@ Changes:
 - Guided interactions only record exploration. Existing concept checks require both evidence and mechanism answers. Real lab records remain separate and manually controlled.
 
 Validation includes the curriculum/model invariants, compiled Vue state checks, the 272-link catalogue audit, production build/link checks, full guided/free-exploration Chromium flows, and focused SSRF/encoding tests. Browser screenshots and review status are local artifacts. A passing test proves the exercised behavior; whether the revised teaching feels clear to this learner still needs their experience after publication.
+
+
+## Technical interface correction · 2026-10-23
+
+The user explained that extra interactions and invented visualizations made unfamiliar topics vague. They specifically requested an actual interface showing what changes where, without metaphors or a childish presentation. The earlier network-animation direction was discarded before implementation.
+
+The SSRF sample now uses an image-import form alongside concrete request and response records. Changing the form updates an explicitly unsent JSON draft. Submitting it executes the displayed handler function; the inspector records its POST, outgoing GET, upstream Response, and returned Response. The image preview only renders image content; an internal text response is inspected as a body, rather than depicted as a successful imported picture. An optional debug pause holds the actual asynchronous fetch; reset/unmount releases it and rejects stale UI updates.
+
+The code viewer imports the same source file as the runtime, rather than showing a separately maintained pseudo-code snippet. Browser tests compare the complete displayed source with that file. Local fixtures and browser/server reachability remain explicitly described as the execution environment; no remote backend or real internal network is claimed. Other topics retain their current flow pending feedback on this focused correction.
