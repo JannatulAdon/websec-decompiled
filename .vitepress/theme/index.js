@@ -5,3 +5,5 @@ export default { Layout }
 import './rebuilt/guided.css'
 
 import './rebuilt/visual.css'
+
+import './rebuilt/workshop.css'

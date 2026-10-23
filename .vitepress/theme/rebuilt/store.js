@@ -5,7 +5,7 @@ export const KEY='websec-decompiled:rebuild:v1'
 const lessonIds=new Set(modules.flatMap(m=>m.lessons.map(l=>l.id)))
 const labIds=new Set(academyLabs.map(l=>l.id))
 const moduleIds=new Set(modules.map(m=>m.id))
-export const state=reactive({version:1,done:{},explored:{},missions:{},passed:{},labs:{},saved:{},notes:{},reviews:{},last:'',palette:'ocean',dark:true})
+export const state=reactive({version:1,done:{},explored:{},missions:{},passed:{},labs:{},saved:{},notes:{},reviews:{},last:'',palette:'ocean',dark:false})
 export const storageStatus=reactive({error:''})
 const safeMap=(input,allow,text=false)=>Object.fromEntries(Object.entries(input&&typeof input==='object'&&!Array.isArray(input)?input:{}).filter(([key,val])=>allow.has(key)&&(text?typeof val==='string'&&val.length<=20000:val===true)))
 export function normalize(raw){

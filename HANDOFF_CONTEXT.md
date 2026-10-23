@@ -1,3 +1,5 @@
+> **Active direction (2026-10-23, latest):** The user now explicitly authorizes completing the whole platform autonomously: “you have enough input … make me that website now.” This supersedes the earlier pause on broader rollout. They are going to sleep and need no further preference questions. Develop/deploy only this platform; never attempt a real lab. The default lesson is now `GuidedLesson.vue`, with 35 topic definitions/purposes and 176 individually authored questions in `teaching.js`. `workshop.css` refreshes the entire platform. Lesson tools and free exploration are optional. The SSRF story was also rewritten to teach definition → concrete code-retrieval goal → normal import → blocked browser → server fetch → causal check. Preserve progress and hosting. Read README and the latest audit section for the current architecture; older sample-only directions below are historical.
+
 > **Current sample (2026-10-23):** The shorter encoding sample was acceptable but already familiar to the user, and still felt insufficiently engaging/visual. They explicitly selected SSRF as the next unfamiliar topic. Keep the broader rollout paused. `SsrfSample.vue`, `SsrfNetwork.vue`, `ssrf-sample.js`, and `ssrf-sample.css` implement a separate sample at `#/sample/ssrf`: a named image importer, interactive network map with request/response routes, public/private destination choices, direct-browser comparison, a simple destination rule, and one transfer check. All routes are fictional local fixtures; no destination is contacted. Continue refining one sample from user feedback before applying the teaching style broadly.
 
 > **Latest feedback (2026-10-23):** The seven-step encoding sample was too drawn out and introduced “the app” without explaining the setting or purpose. Keep the core concise: identify the website, the user’s goal, what the browser sends, what the server reads, and one check. Explicitly distinguish encoding before sending from decoding when reading. Double decoding and validation order belong in optional follow-up. Continue iterating only this topic.
@@ -101,28 +103,15 @@ npm run check:links
 - `check:labs` verifies all 272 labs across 35 units render exactly once.
 - `check:links` verifies all 2,959+ internal links across all 38 built HTML pages resolve.
 
-### 2. Deploying to GitHub Pages (`https://jannatuladon.github.io/websec-decompiled/`)
-Because `/mnt/win_data/Storage/Sync/ctf_learn` sits on an NTFS mount (`/mnt/win_data`), run git deployments via a temporary folder in `/tmp` using the authenticated `gh` account (`JannatulAdon`):
+### 2. Deploying to GitHub Pages
 
-```bash
-# 1. Push built site (.vitepress/dist) to gh-pages branch
-rm -rf /tmp/gh-deploy && mkdir -p /tmp/gh-deploy && cd /tmp/gh-deploy && \
-git init -b gh-pages && \
-git config user.name "JannatulAdon" && \
-git config user.email "JannatulAdon@users.noreply.github.com" && \
-cp -r /mnt/win_data/Storage/Sync/ctf_learn/.vitepress/dist/. . && \
-touch .nojekyll && git add -A && \
-git commit -m "Deploy updated Websec Decompiled build" && \
-git remote add origin https://github.com/JannatulAdon/websec-decompiled.git && \
-git push -f origin gh-pages && rm -rf /tmp/gh-deploy
+Use the existing `.release/source` (main) and `.release/pages` (gh-pages) checkouts. Preserve branch history with ordinary commits and pushes. Never replace either branch with a force push. `.release` and generated artifacts are excluded from source synchronization.
 
-# 2. Sync source code to main branch
-rm -rf /tmp/gh-main && mkdir -p /tmp/gh-main && cd /tmp/gh-main && \
-git init -b main && \
-git config user.name "JannatulAdon" && \
-git config user.email "JannatulAdon@users.noreply.github.com" && \
-rsync -a --exclude='node_modules' --exclude='.vitepress/dist' --exclude='.vitepress/cache' --exclude='.git' /mnt/win_data/Storage/Sync/ctf_learn/ /tmp/gh-main/ && \
-git add -A && git commit -m "Sync source files" && \
-git remote add origin https://github.com/JannatulAdon/websec-decompiled.git && \
-git push -f origin main && rm -rf /tmp/gh-main
-```
+1. Run production checks and review real Chromium screenshots before publishing.
+2. Fetch both remote branches and ensure the checkouts have no unexpected divergence.
+3. Sync source into `.release/source` with rsync, excluding `.git`, `.release`, `node_modules`, `.vitepress/dist`, `.vitepress/cache`, `artifacts`, environment files, and credentials. Review the staged diff, commit, and push to main.
+4. Sync `.vitepress/dist/` into `.release/pages`, preserving `.git`. Add `.nojekyll`, review the diff, commit, and push to gh-pages.
+5. Check the GitHub Pages build, compare the live index SHA-256 with the reviewed build, and exercise the published application on desktop and mobile.
+6. Stop the temporary static server. Record the exact deployed commit, tests, screenshots, and any limits in the local verification artifacts.
+
+Hosting stays at https://jannatuladon.github.io/websec-decompiled/ . The authenticated GitHub CLI can provide credentials through `gh auth git-credential`; do not print credentials or embed them in commands.

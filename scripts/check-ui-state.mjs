@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import {parse,compileScript} from '@vue/compiler-sfc'
 const root=resolve('.vitepress/theme/rebuilt'),out=resolve('.vitepress/cache/ui-state')
 await mkdir(out,{recursive:true})
-for(const name of ['LearningApp','MiniSystem','Sandbox','PlainText','InvestigationDesk','PracticeGuide','AppResponse','HomeDemo','EvidenceLens','ModelScene','EncodingSample','SsrfSample','SsrfNetwork']){
+for(const name of ['LearningApp','MiniSystem','Sandbox','PlainText','InvestigationDesk','PracticeGuide','AppResponse','HomeDemo','EvidenceLens','ModelScene','EncodingSample','SsrfSample','SsrfNetwork','GuidedLesson']){
  const filename=resolve(root,name+'.vue'),source=await readFile(filename,'utf8')
  const {descriptor}=parse(source,{filename});const compiled=compileScript(descriptor,{id:name,inlineTemplate:true,templateOptions:{compilerOptions:{hoistStatic:false,cacheHandlers:false}}})
  const code=compiled.content.replace(/from\s+(['"])(\.[^'"]+)\1/g,(_,quote,spec)=>'from '+JSON.stringify(spec.endsWith('.vue')?'./'+basename(spec,'.vue')+'.mjs':pathToFileURL(resolve(dirname(filename),spec)).href))
@@ -44,11 +44,11 @@ try{
  await route('/learn/sql-injection/0');assert(find('h1','SQL injection'))
  await click(all().find(n=>n.props['aria-label']==='Ordinary request (load control)'));await click(all().find(n=>n.props['aria-label']==='Try a variation (load boundary probe)'));assert(all().some(n=>n.props['data-observation']?.includes('not released')))
  const boundary=all().find(n=>n.type==='input'&&n.props.type==='checkbox'&&n.props['onUpdate:modelValue']);boundary.props['onUpdate:modelValue'](true);boundary.props.onChange?.();await tick();assert(!all().some(n=>n.props['data-observation']?.includes('not released')))
- await click(find('button','Check understanding'))
+ await click(find('button','Check'))
  const l=modules.find(m=>m.id==='sql-injection').lessons[0]
  await click(find('button',l.evidence));await click(find('button',l.mechanism));await click(find('button','Save check & continue'))
  assert.equal(window.location.hash,'#/learn/sql-injection/1');assert(state.done['sql-injection:0'])
- await click(find('button','Transfer'));await click(find('button',cases['sql-injection'].correct));await click(find('button','Save transfer check'));assert(state.passed['sql-injection']);assert(state.reviews['sql-injection'])
+ await click(find('button','Apply'));await click(find('button',cases['sql-injection'].correct));await click(find('button','Save transfer check'));assert(state.passed['sql-injection']);assert(state.reviews['sql-injection'])
  await route('/labs');assert.equal(all().filter(n=>String(n.props.class).split(' ').includes('lab-card')).length,12);assert(find('span','272 challenges'))
  const topic=all().find(n=>n.type==='select'&&n.children.some(c=>c.type==='option'&&c.props.value==='sql-injection'));topic.props['onUpdate:modelValue']('sql-injection');await tick();assert.equal(all().filter(n=>String(n.props.class).split(' ').includes('lab-card')).length,12);assert(find('span','18 challenges'))
  const labTitle=all().find(n=>n.type==='button'&&n.props.class==='lab-title-button');await click(labTitle)

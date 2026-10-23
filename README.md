@@ -4,13 +4,15 @@ A browser-local web security learning platform for learning how to investigate u
 
 The new application replaces the old theme and lesson interface. It uses a newly authored curriculum and retains the factual catalogue of 272 Academy lab links. Original Markdown and lesson components remain in source as an archive; the production build excludes them. Existing public URLs redirect into the new curriculum.
 
-## Current learning-design iteration
+## Current learning experience
 
-The next user-selected unfamiliar topic is SSRF. `#/sample/ssrf` is a separate two-part sample: a fictional image importer, a responsive interactive network map showing the browser/server distinction, fixed public/private destinations, a destination-rule comparison, and one transfer question. The diagram’s paths and response panels derive from the same local result. Optional route animations respect reduced motion. No URL in the lesson is fetched, and it does not award lesson or lab progress. Run `npm run check:ssrf-sample` with the same browser/static-server variables; evidence is in `artifacts/ssrf-sample/`.
+The user authorized a platform-wide rollout after identifying that open-ended simulators did not explain the goal or what a result meant. The default is now a guided workshop, with a plain-English definition and purpose for all 35 topics, and an individually authored question for each of the 176 lessons. `GuidedLesson.vue` runs each lesson’s existing bounded model: see the starting example, change the displayed values, compare the actual result, then explain the evidence. Before/After buttons restore the exact snapshots. Rules, traces, and arbitrary editing are optional rather than prerequisites for understanding the first action.
 
-Broader redesign work is paused for user feedback. The second topic, Encoding & parser boundaries, has an isolated beginner sample at `#/sample/encoding`, linked from its module page. It uses a new light/dark workshop design and two short parts: a named photo website with a browser-to-server filename journey, then one quick check. Repeated decoding and validation order are optional follow-up material. This is a small lesson for review, not a completed replacement of the whole encoding module. It does not award concept checks or lab completion.
+The homepage gives a clear next lesson, the ordered path opens one stage at a time, and lesson navigation lives in an expandable tools drawer. The refreshed workshop styling uses readable sans-serif text, quieter surfaces, and the existing four palettes in light/dark modes. New browsers start in light mode; saved appearance preferences are preserved. Concept checks still require interaction and two correct answers. No guided click marks a real lab solved.
 
-`npm run check:sample` exercises the full sample on desktop/mobile in light/dark against a temporary static server at `QA_BASE_URL`, using the same Playwright/Chromium environment variables as the other browser checks. Evidence is in `artifacts/encoding-sample-v2/`.
+The focused SSRF story at `#/sample/ssrf` begins with a definition, impact, a named picture-import website, and a concrete goal: retrieve a fictional staff preview code. It progresses through a normal import, a failed direct browser request, an unintended server request, and a causal understanding check. An optional destination-rule comparison follows the check. Its map and response are generated from the same fixed local model; no destination is contacted. The shorter encoding story remains at `#/sample/encoding`.
+
+`npm run check:guided` exercises all 176 guided lessons on desktop/mobile, plus selected lessons in both themes, opening-action visibility for all topics, exact input changes, Before/After restoration, tab preservation, and gated progress. `npm run check:browser` covers the optional free-exploration workspaces, all palettes, labs, investigations, and backups. `npm run check:ssrf-sample` and `npm run check:sample` cover the two focused stories. Browser environment variables are described below. Evidence is kept in `artifacts/workshop/`, `artifacts/browser/`, `artifacts/ssrf-guided/`, and `artifacts/encoding-sample-v2/`.
 
 ## Learning experience
 
@@ -19,8 +21,8 @@ Broader redesign work is paused for user feedback. The second topic, Encoding & 
 - 176 guided lesson investigations with clickable input examples, immediate app responses, optional custom editors, highlighted decision traces, and baseline comparisons. These compute selected behavior locally; they are deliberately limited models rather than live exploitation labs.
 - 35 unfamiliar-scenario transfer checks, 35 practical investigation guides, and 6 independent fictional investigation workspaces.
 - 272 searchable Academy lab links with relevant concept lessons, investigation prompts, bookmarks, solved records, and notes. Every retained lab has an explicit prerequisite map; links teach mechanisms without revealing challenge solutions.
-- A small fictional app is the main lesson workspace. A three-step coach suggests the next action; recent requests can be replayed, and experiments survive lesson-tab changes. Mobile layouts place a compact task prompt before the app.
-- An interactive product-ID example on the homepage and optional ready requests in all six fictional investigations.
+- The guided lesson shows one task, the exact values being changed, the computed response, and a mechanism visualization. Optional free exploration adds ready input chips, custom editors, comparisons, and recent request replay.
+- An optional product-ID playground on the homepage and ready requests in all six fictional investigations.
 - Live mechanism diagrams show actual routes, query matches, resolved paths, ownership gates, parsed elements, network destinations, cache reuse, request boundaries, shared-state races, and balance changes. Other lessons render their actual checkpoints as a connected decision flow.
 - Step through reported checkpoints, compare any recent request, and distinguish changed inputs, interpretation, and response. Optional live preview runs custom edits after a short pause; unsent drafts remain clearly separate from the last observation.
 - Investigation requests, evidence logs, and notebook drafts survive mode changes, workspace switches, and reloads in the same browser.
@@ -52,7 +54,10 @@ npm run check:ui
 npm run check:labs
 BASE_PATH=/websec-decompiled/ npm run build
 npm run check:links
+npm run check:guided
 npm run check:browser
+npm run check:ssrf-sample
+npm run check:sample
 ```
 
 `check:visuals` checks diagram facts against model results, including query binding, ownership, paths, request framing, all 24 race orderings, comparisons, and draft validation. `check:curriculum` validates records, preparation mappings, local model invariants, parser behavior, and backup normalization. `check:ui` compiles the actual Vue components into a custom renderer to test state and event flows; it is not a browser or layout test. `check:labs` retains the legacy source-catalogue integrity audit. `check:links` understands both generated files and application routes.
@@ -67,6 +72,7 @@ Before publication, personally inspect the generated screenshots at 1440×900 an
 
 - `.vitepress/theme/rebuilt/LearningApp.vue`: application shell, routing, learning modes, practice, reference, progress.
 - `.vitepress/theme/rebuilt/curriculum.js`: new lessons, stages, lab-preparation relevance rules.
+- `.vitepress/theme/rebuilt/teaching.js`, `GuidedLesson.vue`, and `workshop.css`: topic definitions, purposes, 176 lesson questions, guided model comparisons, and the refreshed interface.
 - `.vitepress/theme/rebuilt/MiniSystem.vue`: guided tasks, input choices, local model execution, comparisons, request history.
 - `.vitepress/theme/rebuilt/EvidenceLens.vue`, `ModelScene.vue`, and `visual-data.js`: live diagrams, actual checkpoints, immutable request comparisons, and observation summaries.
 - `.vitepress/theme/rebuilt/investigation-drafts.js`: validated browser-local request/log/notebook restoration, separate from checked progress.

@@ -29,6 +29,8 @@ async function mount(context){
   try{await route.fulfill({body:await readFile(path),contentType:mime[extname(path)]||'application/octet-stream'})}catch{await route.fulfill({status:404,body:'Not found'})}
  })
 }
+// This suite covers the optional free-exploration workspace; guided defaults have their own suite.
+async function goto(page,url){await page.goto(url);if(url.includes('#/learn/')){await page.locator('.lesson-tools>summary').click();const toggle=page.locator('.lesson-experience-switch button');if((await toggle.innerText()).includes('Explore freely'))await toggle.click()}}
 async function screenshot(page,name){
  await page.screenshot({path:resolve(output,name+'.png'),fullPage:true})
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)
@@ -38,28 +40,28 @@ try{
  for(const [device,viewport] of [['desktop',{width:1440,height:900}],['mobile',{width:390,height:844}]]){
   const context=await browser.newContext({viewport,reducedMotion:'reduce'});await mount(context)
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text())})
-  await page.goto(base);await page.getByRole('link',{name:'Start with the fundamentals'}).waitFor()
+  await goto(page,base);await page.getByRole('link',{name:'Start learning from the beginning'}).waitFor()
   for(const palette of ['ocean','sage','indigo','espresso'])for(const dark of [true,false]){
    await page.evaluate(({palette,dark})=>{const raw=JSON.parse(localStorage.getItem('websec-decompiled:rebuild:v1')||'{"version":1,"done":{},"labs":{}}');localStorage.setItem('websec-decompiled:rebuild:v1',JSON.stringify({...raw,palette,dark}))},{palette,dark})
    await page.reload();await page.locator('html[data-atmosphere="'+palette+'"]').waitFor()
    assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('dark')),dark)
-   const colors=await page.locator('.hero-actions .primary').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...colors)>=4.5,`${palette} ${dark}: primary-button contrast`)
-   await page.locator('.hero-actions .primary').hover();const hoverColors=await page.locator('.hero-actions .primary').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...hoverColors)>=4.5,`${palette} ${dark}: hovered primary-button contrast`);await page.mouse.move(0,0)
+   const colors=await page.locator('.welcome-copy .primary').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...colors)>=4.5,`${palette} ${dark}: primary-button contrast`)
+   await page.locator('.welcome-copy .primary').hover();const hoverColors=await page.locator('.welcome-copy .primary').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...hoverColors)>=4.5,`${palette} ${dark}: hovered primary-button contrast`);await page.mouse.move(0,0)
    await screenshot(page,`${device}-${palette}-${dark?'dark':'light'}-home`)
-   const exampleColors=await page.locator('.home-demo .input-examples button[aria-pressed=true]').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...exampleColors)>=4.5,`${palette} ${dark}: selected-example contrast`)
+   await page.locator('.home-playground>summary').click();const exampleColors=await page.locator('.home-demo .input-examples button[aria-pressed=true]').evaluate(el=>{const s=getComputedStyle(el);return [s.color,s.backgroundColor]});assert(contrast(...exampleColors)>=4.5,`${palette} ${dark}: selected-example contrast`)
    await page.getByRole('button',{name:'id=abcd',exact:true}).click();assert((await page.locator('.home-demo .app-response').getAttribute('data-observation')).startsWith('404'))
    await page.getByRole('button',{name:'id=8',exact:true}).click();assert((await page.locator('.home-demo .app-response').innerText()).includes('Cable tester'))
-   await page.goto(base+'#/learn/foundations/0')
+   await goto(page,base+'#/learn/foundations/0')
    await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
    await page.getByRole('button',{name:'/items/8',exact:true}).click()
    assert((await page.locator('.mini-system .app-response').innerText()).includes('Cable tester'))
-   if(device==='mobile')assert((await page.getByRole('button',{name:'/items/8',exact:true}).boundingBox()).y<844,'Ready examples should appear in the first phone viewport')
+   if(device==='mobile'){await page.getByRole('button',{name:'/items/8',exact:true}).scrollIntoViewIfNeeded();assert((await page.getByRole('button',{name:'/items/8',exact:true}).boundingBox()).y<844,'Ready examples remain reachable in free exploration')}
    await screenshot(page,`${device}-${palette}-${dark?'dark':'light'}-guided`)
-   await page.goto(base)
+   await goto(page,base)
 
   }
   // Navigation and live draft/snapshot regressions from the independent audit.
-  await page.goto(base+'#/learn/foundations/0')
+  await goto(page,base+'#/learn/foundations/0')
   await page.locator('.skip').focus();await page.keyboard.press('Enter')
   assert(page.url().endsWith('#/learn/foundations/0'),'Skip navigation must retain the lesson route')
   assert.equal(await page.evaluate(()=>document.activeElement?.id),'workspace')
@@ -74,7 +76,7 @@ try{
   await page.getByRole('button',{name:'Step through the model',exact:false}).click()
   assert(await page.locator('.experiment-panel .checkpoint-focus').count())
   await screenshot(page,`${device}-live-route-scene`)
-  await page.goto(base+'#/learn/information-disclosure/0')
+  await goto(page,base+'#/learn/information-disclosure/0')
   assert.equal(await page.locator('.model-field textarea').count(),0)
   await page.getByRole('button',{name:'7',exact:true}).click()
   assert((await page.locator('.app-response').innerText()).includes('Field notebook'))
@@ -96,17 +98,17 @@ try{
   await (device==='mobile'?page.locator('.mobile-task .primary'):page.getByRole('button',{name:'Try the ready variation',exact:false})).click()
   await (device==='mobile'?page.locator('.mobile-task .primary'):page.getByRole('button',{name:'Apply the boundary',exact:false})).click()
   await (device==='mobile'?page.locator('.mobile-task .primary'):page.getByRole('button',{name:'Check my understanding',exact:false})).click()
-  assert.equal(await page.getByRole('tab',{name:'Check understanding',exact:true}).getAttribute('aria-selected'),'true')
+  assert.equal(await page.getByRole('tab',{name:'Check',exact:true}).getAttribute('aria-selected'),'true')
   for(const dark of [true,false]){
    await page.evaluate(dark=>{const raw=JSON.parse(localStorage.getItem('websec-decompiled:rebuild:v1'));localStorage.setItem('websec-decompiled:rebuild:v1',JSON.stringify({...raw,palette:'ocean',dark}))},dark)
-   await page.reload();await page.waitForFunction(dark=>document.documentElement.classList.contains('dark')===dark,dark);await page.goto(base+'#/learn/sql-injection/0')
-   for(const name of ['Experiment','Follow the trace','Check understanding','Transfer']){
-    await page.getByRole('tab',{name,exact:true}).click();if(name==='Experiment'){await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click();await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()}await screenshot(page,`${device}-${dark?'dark':'light'}-sql-${name.replaceAll(' ','-')}`)
+   await page.reload();await page.waitForFunction(dark=>document.documentElement.classList.contains('dark')===dark,dark);await goto(page,base+'#/learn/sql-injection/0')
+   for(const name of ['Learn','Inspect','Check','Apply']){
+    await page.getByRole('tab',{name,exact:true}).click();if(name==='Learn'){await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click();await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()}await screenshot(page,`${device}-${dark?'dark':'light'}-sql-${name.replaceAll(' ','-')}`)
    }
   }
   for(const tab of await page.locator('.mode-tabs[aria-label="Lesson modes"] [role=tab]').all()){const id=await tab.getAttribute('aria-controls');assert(id);assert.equal(await page.locator('#'+id).getAttribute('role'),'tabpanel')}
-  await page.getByRole('tab',{name:'Experiment',exact:true}).focus();await page.keyboard.press('ArrowRight');assert.equal(await page.getByRole('tab',{name:'Follow the trace',exact:true}).getAttribute('aria-selected'),'true')
-  await page.getByRole('tab',{name:'Experiment',exact:true}).click()
+  await page.getByRole('tab',{name:'Learn',exact:true}).focus();await page.keyboard.press('ArrowRight');assert.equal(await page.getByRole('tab',{name:'Inspect',exact:true}).getAttribute('aria-selected'),'true')
+  await page.getByRole('tab',{name:'Learn',exact:true}).click()
   await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
   await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()
   assert(await page.locator('.mini-system .app-response').getAttribute('data-observation').then(t=>t.includes('not released')))
@@ -115,10 +117,10 @@ try{
   assert(!(await page.locator('.app-response').getAttribute('class')).includes('response-denied'),'An empty SQL result is not a rejected request')
   await screenshot(page,`${device}-editable-sql`)
   const keptObservation=await page.locator('.mini-system .app-response').getAttribute('data-observation')
-  await page.getByRole('tab',{name:'Follow the trace',exact:true}).click();await page.getByText('Take this mechanism to a CTF',{exact:true}).click();await page.getByRole('button',{name:'Use tools',exact:true}).click();await screenshot(page,`${device}-practical-guide`);await page.getByRole('tab',{name:'Experiment',exact:true}).click();assert.equal(await page.locator('.mini-system .app-response').getAttribute('data-observation'),keptObservation)
+  await page.getByRole('tab',{name:'Inspect',exact:true}).click();await page.getByText('Take this mechanism to a CTF',{exact:true}).click();await page.getByRole('button',{name:'Use tools',exact:true}).click();await screenshot(page,`${device}-practical-guide`);await page.getByRole('tab',{name:'Learn',exact:true}).click();assert.equal(await page.locator('.mini-system .app-response').getAttribute('data-observation'),keptObservation)
   // Exercise every lesson's own control/probe configuration in a real browser.
   for(const m of modules)for(const [index,system] of lessonSystems[m.id].entries()){
-   await page.goto(base+`#/learn/${m.id}/${index}`)
+   await goto(page,base+`#/learn/${m.id}/${index}`)
    await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
    await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()
    const observation=await page.locator('.mini-system .app-response').getAttribute('data-observation')
@@ -131,23 +133,23 @@ try{
   }
   // Concept-check progression and persistence.
   const m=modules.find(m=>m.id==='sql-injection'),lesson=m.lessons[0]
-  await page.goto(base+'#/learn/sql-injection/0');await page.getByRole('tab',{name:'Check understanding'}).click()
+  await goto(page,base+'#/learn/sql-injection/0');await page.getByRole('tab',{name:'Check'}).click()
   await page.getByRole('button',{name:lesson.evidence,exact:false}).click()
   await page.getByRole('button',{name:lesson.mechanism,exact:false}).click()
   await page.getByRole('button',{name:'Save check & continue'}).click()
   await page.waitForURL('**/#/learn/sql-injection/1');await page.reload()
   assert(await page.evaluate(()=>JSON.parse(localStorage.getItem('websec-decompiled:rebuild:v1')).done['sql-injection:0']))
-  await page.getByRole('tab',{name:'Transfer',exact:true}).click()
+  await page.locator('.lesson-tools>summary').click();await page.getByRole('tab',{name:'Apply',exact:true}).click()
   await page.getByRole('button',{name:cases['sql-injection'].correct,exact:false}).click()
   await page.getByRole('button',{name:'Save transfer check'}).click()
-  await page.goto(base+'#/labs');const rendered=new Set();for(let count=0;count<23;count++){for(const id of await page.locator('.lab-card').evaluateAll(cards=>cards.map(c=>c.dataset.labId)))rendered.add(id);const next=page.getByRole('button',{name:'Next →',exact:true});if(await next.isDisabled())break;await next.click()}assert.equal(rendered.size,academyLabs.length)
+  await goto(page,base+'#/labs');const rendered=new Set();for(let count=0;count<23;count++){for(const id of await page.locator('.lab-card').evaluateAll(cards=>cards.map(c=>c.dataset.labId)))rendered.add(id);const next=page.getByRole('button',{name:'Next →',exact:true});if(await next.isDisabled())break;await next.click()}assert.equal(rendered.size,academyLabs.length)
   await page.getByRole('combobox',{name:'Topic',exact:true}).selectOption('sql-injection')
   assert.equal(await page.locator('.lab-card').count(),12);await page.getByRole('button',{name:'Next →',exact:true}).click();assert.equal(await page.locator('.lab-card').count(),6);await page.getByRole('button',{name:'← Previous',exact:true}).click()
   await page.locator('.lab-title-button').first().click()
   await page.getByRole('checkbox',{name:'I solved this lab'}).check()
   await page.getByRole('checkbox',{name:'Hide solved'}).check();assert.equal(await page.locator('.lab-card').count(),12);assert((await page.locator('.lab-pagination').innerText()).includes('of 17'))
   await screenshot(page,`${device}-practice`)
-  await page.goto(base+'#/mystery')
+  await goto(page,base+'#/mystery')
   await page.getByRole('button',{name:'Send to local fixture'}).click()
   await page.getByLabel('Input value / body',{exact:true}).fill('42')
   await page.getByRole('button',{name:'Send to local fixture'}).click()
@@ -165,11 +167,11 @@ try{
   await page.getByRole('button',{name:'Save investigation record'}).click()
   assert(await page.evaluate(()=>JSON.parse(localStorage.getItem('websec-decompiled:rebuild:v1')).missions.receipts))
   await screenshot(page,`${device}-investigation`)
-  await page.goto(base+'sql-injection/03-blind-sqli.html');await page.waitForURL('**/#/learn/sql-injection/3')
-  await page.goto(base+'#/reference');await page.getByRole('tab',{name:'Plain-English terms'}).click()
+  await goto(page,base+'sql-injection/03-blind-sqli.html');await page.waitForURL('**/#/learn/sql-injection/3')
+  await goto(page,base+'#/reference');await page.getByRole('tab',{name:'Plain-English terms'}).click()
   await page.getByRole('searchbox',{name:'Search plain-English terms'}).fill('CORS');assert(await page.locator('.glossary dt').count()>0)
   await screenshot(page,`${device}-glossary`)
-  await page.goto(base+'#/progress');await screenshot(page,`${device}-progress`)
+  await goto(page,base+'#/progress');await screenshot(page,`${device}-progress`)
   const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Export backup'}).click();const download=await downloadPromise;const path=await download.path();const backup=JSON.parse(await readFile(path,'utf8'));assert(backup.done['sql-injection:0']);assert(backup.passed['sql-injection']);
   await page.locator('input[type=file]').setInputFiles({name:'progress.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({version:1,done:{'encoding:0':true},labs:{},notes:{foundations:'Imported fixture note'},palette:'ocean',dark:true}))})
   await page.getByRole('status').filter({hasText:'Backup merged'}).waitFor()

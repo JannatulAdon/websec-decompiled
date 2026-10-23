@@ -20,7 +20,8 @@
     "check:visuals": "node scripts/check-visuals.mjs",
     "check:scenes": "node scripts/check-scenes.mjs",
     "check:sample": "node scripts/check-encoding-sample.mjs",
-    "check:ssrf-sample": "node scripts/check-ssrf-sample.mjs"
+    "check:ssrf-sample": "node scripts/check-ssrf-sample.mjs",
+    "check:guided": "node scripts/check-guided.mjs"
   },
   "devDependencies": {
     "markdown-it-container": "^3.0.0",

@@ -33,3 +33,19 @@ Generated evidence is kept locally under `artifacts/browser/`, `artifacts/scenes
 ## Limits
 
 The audit covers the built platform and bounded fictional models. It does not certify full browser, database, proxy, or cryptographic implementations, or guarantee success on an unfamiliar CTF. No remote challenge was solved, and the user's Academy records were not changed. Investigation drafts stay in this browser; checked investigation records are included in progress backups.
+
+
+## Learning-direction review · 2026-10-23
+
+The user reported not understanding what SSRF meant, why it mattered, or what to do on arrival, despite completing the earlier sample. This review was performed by the primary agent; the independent agent audit above belongs to the earlier visualization release.
+
+Observed design problems were competing controls before a task, unexplained application context, implied rather than explicit learning goals, and a network result with little meaning to a beginner. These are plausible causes of the reported confusion, not a claim to have measured the learner’s understanding.
+
+Changes:
+
+- SSRF now states its meaning and purpose first. Postcard Studio is introduced as a picture importer; the goal is a fictional staff preview code. Controls appear in order. A direct browser failure establishes the network boundary before the server request reveals the code. Incorrect choices receive specific explanations. The fix appears only after the causal understanding check.
+- Every topic now has an authored definition, purpose, and named setting. All 176 lessons have individual questions. The guided default computes actual control/probe results, highlights changed fields, supports exact Before/After replay, and places the explanation alongside the result. More technical detail and free exploration remain accessible.
+- The home, path, lesson, and practice presentation uses the workshop design. Secondary lesson controls are grouped in a drawer. Mobile checks caught an offscreen first action; redundant instructions were removed from the phone layout while retaining context and purpose.
+- Guided interactions only record exploration. Existing concept checks require both evidence and mechanism answers. Real lab records remain separate and manually controlled.
+
+Validation includes the curriculum/model invariants, compiled Vue state checks, the 272-link catalogue audit, production build/link checks, full guided/free-exploration Chromium flows, and focused SSRF/encoding tests. Browser screenshots and review status are local artifacts. A passing test proves the exercised behavior; whether the revised teaching feels clear to this learner still needs their experience after publication.

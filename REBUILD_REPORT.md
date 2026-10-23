@@ -1,3 +1,15 @@
+# Guided workshop update · 2026-10-23
+
+The user reported confusion about the previous learning sample, then authorized completing the broader platform autonomously. The default lesson now introduces the idea and purpose, names the setting, asks an individually authored question, and guides a starting-input / changed-input comparison. All 35 modules and 176 existing bounded experiments use this flow. The main explanations teach the mechanism; simulator implementation notes are optional.
+
+The homepage, stage path, lesson workspace, and practice presentation share the refreshed workshop design. Navigation and advanced tools are grouped into a drawer. New users start in light mode; existing theme preferences and stored records remain respected. The inspector follows the active guided/free-exploration view and does not mix their snapshots.
+
+The SSRF introduction now teaches a concrete fictional task: retrieve a staff preview code through a picture importer. It establishes normal server fetching, demonstrates the direct-browser boundary, exposes the code through an unintended server request, and checks the causal explanation. The optional rule comparison appears afterward. No destination is contacted.
+
+Verification includes production checks, all 176 guided lessons on both device profiles, 378 guided device/theme flows in total, the existing full free-exploration/practice/backup browser suite, all thirteen visualization kinds on desktop/mobile in dark/light, and focused SSRF/encoding checks. Screenshots are personally reviewed before publication. Current evidence and exact publication details are in the local `artifacts/` reports. The original release report follows as historical context.
+
+---
+
 # Websec Decompiled rebuild · 2026-10-22
 
 The guided investigation platform is published at https://jannatuladon.github.io/websec-decompiled/. Source and GitHub Pages updates retain repository history. The local release record in `artifacts/live-verification.json` records the deployed commit and live desktop/mobile checks; `artifacts/browser/status.json` records the verified production-build hash.

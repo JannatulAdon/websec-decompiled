@@ -19,7 +19,7 @@ try{
 for(const [device,viewport] of [['desktop',{width:1440,height:900}],['mobile',{width:390,height:844}]]){
  const context=await browser.newContext({viewport,reducedMotion:'reduce'});await context.route('**/*',route=>new URL(route.request().url()).origin===new URL(base).origin?route.continue():route.abort())
  const page=await context.newPage();page.setDefaultNavigationTimeout(60000);page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())})
- await page.goto(base+'#/learn/encoding/0');await page.getByRole('link',{name:'NEW LEARNING SAMPLE',exact:false}).click();await page.waitForURL('**/#/sample/encoding')
+ await page.goto(base+'#/learn/encoding/0');await page.locator('.lesson-tools>summary').click();await page.getByRole('link',{name:'NEW LEARNING SAMPLE',exact:false}).click();await page.waitForURL('**/#/sample/encoding')
  assert.equal(await page.locator('.topbar:visible').count(),0)
  for(const dark of [false,true]){
   await page.getByRole('button',{name:'Start again',exact:false}).click()

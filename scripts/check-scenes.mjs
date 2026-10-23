@@ -14,10 +14,10 @@ try{
   const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message))
   await page.goto(base);await page.locator('html[data-atmosphere]').waitFor()
   for(const [theme,palette,dark] of [['dark','ocean',true],['light','espresso',false]]){
-   await page.evaluate(({palette,dark})=>{const key='websec-decompiled:rebuild:v1';const raw=JSON.parse(localStorage.getItem(key)||'{}');localStorage.setItem(key,JSON.stringify({...raw,palette,dark}))},{palette,dark})
+   await page.evaluate(({palette,dark})=>{const key='websec-decompiled:rebuild:v1';const raw=JSON.parse(localStorage.getItem(key)||'{"version":1,"done":{},"labs":{}}');localStorage.setItem(key,JSON.stringify({...raw,palette,dark}))},{palette,dark})
    await page.reload();await page.waitForFunction(dark=>document.documentElement.classList.contains('dark')===dark,dark)
    for(const [module,index,kind] of cases){
-    await page.goto(base+`#/learn/${module}/${index}`)
+    await page.goto(base+`#/learn/${module}/${index}`);await page.locator('.lesson-tools>summary').click();await page.locator('.lesson-experience-switch button').click()
     await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
     await page.getByRole('button',{name:'Try a variation (load boundary probe)',exact:true}).click()
     assert.equal(await page.locator('.experiment-panel .model-scene').getAttribute('data-scene'),kind)
@@ -26,7 +26,7 @@ try{
    }
   }
   // Equal outputs can hide a different interpretation. Keep both facts visible.
-  await page.goto(base+'#/learn/foundations/0')
+  await page.goto(base+'#/learn/foundations/0');await page.locator('.lesson-tools>summary').click();await page.locator('.lesson-experience-switch button').click()
   await page.getByRole('button',{name:'Ordinary request (load control)',exact:true}).click()
   await page.getByRole('button',{name:'POST',exact:true}).click()
   assert((await page.locator('.experiment-panel .lens-state').innerText()).includes('Interpretation changed · same response'))
