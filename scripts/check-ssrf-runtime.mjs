@@ -17,6 +17,9 @@ const publicRequest=browserRequest(PICTURE_URL),privateRequest=browserRequest(PR
 assert.equal(publicRequest.method,privateRequest.method);assert.equal(publicRequest.url,privateRequest.url)
 assert((await directBrowserCheck(PICTURE_URL)).response.image)
 assert.equal((await directBrowserCheck(PRIVATE_URL)).response,null)
+assert.equal((await directBrowserCheck('HTTP://STAFF.INTRA.TEST/preview')).response,null)
+assert.equal((await directBrowserCheck('http://staff.intra.test/another-path')).response,null)
+assert((await directBrowserCheck('HTTPS://PICTURES.EXAMPLE.TEST/sky.png')).response.image)
 // Pause the real asynchronous handler, rather than replaying invented execution frames.
 let release,waiting;const held=new Promise(resolve=>waiting=resolve),events=[]
 const run=executeImport({url:PRIVATE_URL,onEvent:e=>events.push(e.type),checkpoint:async e=>{if(e.type==='server-request'){waiting();await new Promise(resolve=>release=resolve)}}})

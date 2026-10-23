@@ -37,6 +37,6 @@ export async function executeImport({url,picturesOnly=false,onEvent=()=>{},check
 
 export async function directBrowserCheck(url){
  const request=await requestRecord(new Request(url))
- if([PRIVATE_URL,HTTPS_PRIVATE_URL].includes(url))return {request,error:'Network unreachable: the browser has no route to this internal host.',response:null}
- return {request,error:null,response:await responseRecord(fixtureResponse(url))}
+ if(new URL(request.url).hostname===new URL(PRIVATE_URL).hostname)return {request,error:'Network unreachable: the browser has no route to this internal host.',response:null}
+ return {request,error:null,response:await responseRecord(fixtureResponse(request.url))}
 }
