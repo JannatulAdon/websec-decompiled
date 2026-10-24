@@ -86,3 +86,12 @@ Hosting remains GitHub Pages. Deployment and source synchronization use ordinary
 The retained catalogue is the user’s 272-lab target set, not a promise to match every future Academy release. The experiments deliberately model bounded mechanisms; cryptography, framework behavior, database grammars, shells, networks, and proxy connections are not full production implementations. Each exercise states its scope, and primary references/practical guides support further investigation. Completing a concept check is preparation rather than a guarantee of solving an unfamiliar challenge.
 
 No Academy lab instance was launched, attempted, or solved. Browser tests used fictional local fixtures and disposable browser storage; the user’s Academy account and lab completion state were not changed. Changes remain within development and deployment of this platform.
+
+
+## SSRF research-led teaching revision · 2026-10-25
+
+Rebuilt only the SSRF entry experience and its platform links. The opening now provides a named app, purpose, prefilled input and one action. A normal executable import establishes browser submission versus server retrieval. The guided internal-address comparison shows network failure versus returned internal text. A causal check gives specific feedback, followed by the separately executed Reader preview task and evidence check. Advanced request/code tools remain available afterward in `SsrfWorkbench.vue`.
+
+Educational rationale and source links are documented in `RESEARCH_DESIGN.md`, including contrary productive-failure evidence and limits of extrapolation. This is a tested prototype, not proof of perfect personalization or all-variant SSRF readiness. No other topic’s teaching pattern was rolled out, no real lab was attempted, and saved progress schemas were unchanged.
+
+Validation: production verify, new transfer runtime suite, guided SSRF browser suite, retained optional workbench suite, and personal screenshot review. Local evidence is in `artifacts/ssrf-lesson/` and `artifacts/ssrf-workbench/`; exact deployment and live checks are recorded in `artifacts/live-verification.json`. Browser module currently resolves under `/home/ad0n/.local/lib/python3.14/site-packages/playwright/driver/package/index.mjs`; the older uv cache path no longer exists.

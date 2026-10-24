@@ -7,7 +7,7 @@ export default defineConfig({
  base,appearance:'dark',cleanUrls:false,
  // Retain the former curriculum in source, but do not ship its walkthroughs or
  // components inside generated page chunks. Old public URLs get redirects.
- srcExclude:['README.md','HANDOFF_CONTEXT.md','REBUILD_REPORT.md','AUDIT_REPORT.md','.release/**','artifacts/**','glossary/**',...studyUnits.map(unit=>unit.file)],
+ srcExclude:['README.md','HANDOFF_CONTEXT.md','REBUILD_REPORT.md','AUDIT_REPORT.md','RESEARCH_DESIGN.md','.release/**','artifacts/**','glossary/**',...studyUnits.map(unit=>unit.file)],
  head:[
   ['link',{rel:'icon',href:`${base}favicon.svg`,type:'image/svg+xml'}],
   ['meta',{name:'theme-color',content:'#111a21'}],

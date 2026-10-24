@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import {parse,compileScript} from '@vue/compiler-sfc'
 const root=resolve('.vitepress/theme/rebuilt'),out=resolve('.vitepress/cache/ui-state')
 await mkdir(out,{recursive:true})
-for(const name of ['LearningApp','MiniSystem','Sandbox','PlainText','InvestigationDesk','PracticeGuide','AppResponse','HomeDemo','EvidenceLens','ModelScene','EncodingSample','SsrfSample','SsrfNetwork','GuidedLesson']){
+for(const name of ['LearningApp','MiniSystem','Sandbox','PlainText','InvestigationDesk','PracticeGuide','AppResponse','HomeDemo','EvidenceLens','ModelScene','EncodingSample','SsrfSample','SsrfWorkbench','SsrfNetwork','GuidedLesson']){
  const filename=resolve(root,name+'.vue'),source=await readFile(filename,'utf8')
  const {descriptor}=parse(source,{filename});const compiled=compileScript(descriptor,{id:name,inlineTemplate:true,templateOptions:{compilerOptions:{hoistStatic:false,cacheHandlers:false}}})
  let content=compiled.content

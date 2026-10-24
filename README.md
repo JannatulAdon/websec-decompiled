@@ -10,11 +10,15 @@ The user authorized a platform-wide rollout after identifying that open-ended si
 
 The homepage gives a clear next lesson, the ordered path opens one stage at a time, and lesson navigation lives in an expandable tools drawer. The refreshed workshop styling uses readable sans-serif text, quieter surfaces, and the existing four palettes in light/dark modes. New browsers start in light mode; saved appearance preferences are preserved. Concept checks still require interaction and two correct answers. No guided click marks a real lab solved.
 
-The SSRF sample at `#/sample/ssrf` is now a technical request workbench. A functional image-import form serializes its URL into a real JavaScript Request object. The imported `ssrf-handler.js` function executes against a bounded upstream transport and returns real Response objects. The inspector shows the POST body, outgoing GET, upstream status, and returned body. The code tab displays that actual source through Vite’s raw import, preserving readable source in production. An optional awaited pause stops the handler at its fetch call; it is not an animation or trace replay.
+The SSRF sample at `#/sample/ssrf` now opens a focused four-section lesson: a normal photo import, an internal destination, a causal explanation, and a different link-preview application. Each early state has one primary task. Results move into view with the explanation beside the relevant evidence. Incorrect choices receive specific feedback. After a successful transfer attempt the completed controls collapse to a submitted-value summary, leaving the evidence question as the task.
 
-Destination responses are fixed local fixtures. No real backend is hosted on GitHub Pages and no supplied hostname is contacted. An internal text response is visible in the HTTP inspector while the image preview correctly reports non-image content. A browser-access check, origin rule, unsent-draft label, and previous-request comparison expose the relevant differences without cartoon diagrams or metaphors. The shorter encoding sample remains available at `#/sample/encoding`.
+`SsrfSample.vue` and `ssrf-lesson.css` implement the lesson. `ssrf-transfer.js` runs the separate Reader preview handler with native Request/Response objects; changing a title or colour does not alter the outgoing URL. The former complete inspector remains in `SsrfWorkbench.vue`, available after the lesson, with its actual-source view, editable drafts, destination restriction, and awaited fetch pause.
 
-`npm run check:guided` exercises all 176 guided lessons on desktop/mobile, plus selected lessons in both themes, opening-action visibility for all topics, exact input changes, Before/After restoration, tab preservation, and gated progress. `npm run check:browser` covers the optional free-exploration workspaces, all palettes, labs, investigations, and backups. `npm run check:ssrf-runtime` checks the executed handler, and `npm run check:ssrf-sample` exercises the technical workbench. `npm run check:sample` covers the encoding sample. Browser environment variables are described below. Evidence is kept in `artifacts/workshop/`, `artifacts/browser/`, `artifacts/ssrf-workbench/`, and `artifacts/encoding-sample-v2/`.
+Both applications execute locally with fixed fixture transport. No real backend is hosted on GitHub Pages and no supplied hostname is contacted. The browser-access failure models configured reachability. Neither guided completion nor workbench actions mark concepts or actual labs solved. Existing learner records are preserved. The short sample does not claim coverage of all SSRF variants.
+
+Read [RESEARCH_DESIGN.md](RESEARCH_DESIGN.md) for the educational evidence, contrary findings, evidence-to-design reasoning, and limits. Technical checks do not establish that this learner understands the lesson. The current sample still needs the learner’s experience before wider rollout.
+
+`npm run check:guided` exercises all 176 guided lessons on desktop/mobile, plus selected lessons in both themes, opening-action visibility for all topics, exact input changes, Before/After restoration, tab preservation, and gated progress. `npm run check:browser` covers the optional free-exploration workspaces, all palettes, labs, investigations, and backups. `npm run check:ssrf-lesson` exercises the four-section lesson in desktop/mobile light/dark, including wrong-answer feedback and preservation of seeded learner records. `npm run check:ssrf-transfer` tests the separate Reader handler. `npm run check:ssrf-runtime` checks the importer handler, and `npm run check:ssrf-sample` exercises the technical workbench. `npm run check:sample` covers the encoding sample. Browser environment variables are described below. Evidence is kept in `artifacts/workshop/`, `artifacts/browser/`, `artifacts/ssrf-workbench/`, and `artifacts/encoding-sample-v2/`.
 
 ## Learning experience
 
@@ -58,6 +62,7 @@ BASE_PATH=/websec-decompiled/ npm run build
 npm run check:links
 npm run check:guided
 npm run check:browser
+npm run check:ssrf-lesson
 npm run check:ssrf-sample
 npm run check:sample
 ```

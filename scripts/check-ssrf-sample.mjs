@@ -14,8 +14,26 @@ async function shot(page,name){assert(await page.evaluate(()=>document.documentE
 try{
  for(const [device,viewport] of [['desktop',{width:1440,height:900}],['mobile',{width:390,height:844}]]){
   const context=await browser.newContext({viewport,reducedMotion:'reduce'});await context.route('**/*',r=>{const url=new URL(r.request().url());if(url.origin===new URL(base).origin)return r.continue();errors.push('Unexpected external request: '+url.href);return r.abort()})
-  const page=await context.newPage();page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())})
-  await page.goto(base);await page.getByRole('link',{name:'Try the SSRF request workbench',exact:false}).click();await page.waitForURL('**/#/sample/ssrf')
+  const page=await context.newPage();page.setDefaultTimeout(20000);page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')errors.push(message.text())});page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url())})
+  await page.goto(base);await page.getByRole('link',{name:'Learn SSRF, one request at a time',exact:false}).click();await page.waitForURL('**/#/sample/ssrf')
+  // The full debugger is now optional after the guided learning sequence.
+  const button=name=>page.getByRole('button',{name,exact:true})
+  await button('Import photo').click()
+  await button('Now try a staff-only address').click()
+  await button('Open the staff address').click()
+  await button('Use this address in Studio').click()
+  await button('Import this URL').click()
+  await button('Check why this worked').click()
+  await page.locator('input[name=cause][value=server]').check()
+  await button('Check explanation').click()
+  await button('Try it in a different application').click()
+  await page.locator('input[name=change][value=url]').check()
+  await button('Run preview').click()
+  await page.locator('input[name=evidence][value=request]').check()
+  await button('Check evidence').click()
+  await button('Finish this lesson').click()
+  await button('Open the request workbench').click()
+
   for(const dark of [false,true]){
    await page.getByRole('button',{name:'Reset workbench',exact:false}).click();if(dark)await page.getByRole('button',{name:'Use dark appearance',exact:true}).click();const theme=dark?'dark':'light'
    assert.equal(await page.locator('.ssrf-network,.ssrf-story-progress').count(),0)
@@ -34,7 +52,7 @@ try{
    await page.getByRole('button',{name:'Public image',exact:true}).click();await submit.click();await page.waitForFunction(()=>document.querySelector('.sw-imported-image')?.naturalWidth>0);assert.equal(await page.locator('.sw-server-request mark').innerText(),PICTURE_URL)
    await page.getByRole('checkbox',{name:'Allow only the public picture origin',exact:true}).uncheck();await page.getByRole('checkbox',{name:'Pause before the outgoing fetch',exact:true}).check();await page.getByRole('button',{name:'Internal URL',exact:true}).click();await submit.click();await page.locator('.sw-paused').waitFor();assert.equal(await page.locator('.sw-import-result').getAttribute('data-status'),'pending');assert.equal(await page.locator('.sw-browser-response .sw-response-line').count(),0);assert(await submit.isDisabled());assert((await page.locator('.sw-variables').innerText()).includes(PRIVATE_URL));await shot(page,`${device}-${theme}-6-paused-handler`)
    await page.getByRole('button',{name:'Continue execution',exact:false}).click();await page.locator('.sw-nonimage').waitFor();await page.getByRole('tab',{name:'HTTP exchange',exact:true}).click();assert.equal(await page.locator('.sw-browser-response pre').innerText(),PRIVATE_CODE)
-   await page.getByRole('checkbox',{name:'Pause before the outgoing fetch',exact:true}).uncheck();await page.getByLabel('Image URL',{exact:true}).fill('not a URL');await submit.click();await page.locator('.sw-import-result[data-status="400"]').waitFor();assert.equal(await page.locator('.sw-server-request .sw-request-line').count(),0);await shot(page,`${device}-${theme}-7-invalid-input`)
+   await page.getByRole('checkbox',{name:'Pause before the outgoing fetch',exact:true}).uncheck();await page.getByLabel('Image URL',{exact:true}).fill('not a URL');await submit.click();await page.locator('.sw-import-result[data-status="400"]').waitFor();assert.equal(await page.locator('.sw-server-request .sw-request-line').count(),0);await page.getByRole('tab',{name:'Executed handler',exact:true}).click();assert.equal(await page.locator('.sw-code-highlight').count(),0,'Invalid input must not highlight an unexecuted fetch');await page.getByRole('tab',{name:'HTTP exchange',exact:true}).click();await shot(page,`${device}-${theme}-7-invalid-input`)
    await page.getByRole('tab',{name:'HTTP exchange',exact:true}).focus();await page.keyboard.press('ArrowRight');assert.equal(await page.getByRole('tab',{name:'Executed handler',exact:true}).getAttribute('aria-selected'),'true');await page.keyboard.press('Home');assert.equal(await page.getByRole('tab',{name:'HTTP exchange',exact:true}).getAttribute('aria-selected'),'true')
   }
   // Reset while paused releases the awaited handler and rejects its stale UI updates.
